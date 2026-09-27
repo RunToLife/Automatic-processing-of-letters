@@ -7,12 +7,12 @@ DB_PATH = os.path.join(INSTANCE_DIR, "letters.db")
 
 UPLOAD_DIR = os.path.join(BASE_DIR, "storage", "uploads")
 
-# Корневая папка, внутри которой пользователю разрешено выбирать
-# место сохранения WORD-документов (защита от обхода каталогов).
-# Можно переопределить переменной окружения SAVE_ROOT_DIR, например
-# указав путь к сетевой шаре: SAVE_ROOT_DIR=//server/share
-SAVE_ROOT_DIR = os.environ.get(
-    "SAVE_ROOT_DIR", os.path.join(BASE_DIR, "storage", "shared")
+# Служебный архив: WORD-документ в первую очередь сохраняется на компьютер
+# пользователя (через диалог сохранения браузера), но сервер также хранит
+# собственную копию здесь, чтобы ссылка на файл в таблице "Сканы" оставалась
+# рабочей для всех пользователей локальной сети.
+ARCHIVE_DIR = os.environ.get(
+    "ARCHIVE_DIR", os.path.join(BASE_DIR, "storage", "archive")
 )
 
 SECRET_KEY_FILE = os.path.join(INSTANCE_DIR, "secret_key.txt")
@@ -41,4 +41,4 @@ def get_secret_key() -> str:
 def ensure_dirs():
     os.makedirs(INSTANCE_DIR, exist_ok=True)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    os.makedirs(SAVE_ROOT_DIR, exist_ok=True)
+    os.makedirs(ARCHIVE_DIR, exist_ok=True)

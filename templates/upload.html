@@ -36,16 +36,11 @@
     <label>Дата обработки письма
       <input type="date" id="processedDateInput">
     </label>
-
-    <label>Папка для сохранения</label>
-    <div class="browser">
-      <div class="browser-path" id="browserPath"></div>
-      <div class="browser-list" id="browserList"></div>
-      <div class="browser-actions">
-        <input type="text" id="newFolderName" placeholder="Название новой папки">
-        <button type="button" id="createFolderBtn">Создать папку</button>
-      </div>
-    </div>
+    <p class="hint">
+      Файл будет сохранён на этот компьютер. В браузерах на основе Chrome/Edge
+      откроется системный диалог «Сохранить как» с выбором папки; в остальных
+      браузерах файл будет загружен в папку загрузок по умолчанию.
+    </p>
 
     <div class="modal-actions">
       <button type="button" id="cancelSaveBtn" class="secondary">Отмена</button>

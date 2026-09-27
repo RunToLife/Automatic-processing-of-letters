@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS scans (
     incoming_number TEXT NOT NULL,
     saved_date TEXT NOT NULL,
     file_path TEXT NOT NULL,
+    archive_filename TEXT NOT NULL,
     created_by TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -79,12 +80,13 @@ def create_user(username: str, password: str, role: str = "user"):
         )
 
 
-def add_scan(title: str, incoming_number: str, saved_date: str, file_path: str, created_by: str):
+def add_scan(title: str, incoming_number: str, saved_date: str, file_path: str,
+             archive_filename: str, created_by: str):
     with get_db() as conn:
         cur = conn.execute(
-            "INSERT INTO scans (title, incoming_number, saved_date, file_path, created_by) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (title, incoming_number, saved_date, file_path, created_by),
+            "INSERT INTO scans (title, incoming_number, saved_date, file_path, "
+            "archive_filename, created_by) VALUES (?, ?, ?, ?, ?, ?)",
+            (title, incoming_number, saved_date, file_path, archive_filename, created_by),
         )
         return cur.lastrowid
 

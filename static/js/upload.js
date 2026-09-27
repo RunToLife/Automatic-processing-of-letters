@@ -14,13 +14,6 @@
   const cancelSaveBtn = document.getElementById("cancelSaveBtn");
   const confirmSaveBtn = document.getElementById("confirmSaveBtn");
 
-  const browserPath = document.getElementById("browserPath");
-  const browserList = document.getElementById("browserList");
-  const newFolderName = document.getElementById("newFolderName");
-  const createFolderBtn = document.getElementById("createFolderBtn");
-
-  let currentFolder = "";
-
   pdfInput.addEventListener("change", () => {
     recognizeBtn.disabled = !pdfInput.files.length;
   });
@@ -60,8 +53,6 @@
     incomingNumberInput.value = "";
     const today = new Date().toISOString().slice(0, 10);
     processedDateInput.value = today;
-    currentFolder = "";
-    loadBrowser("");
     saveModal.classList.add("open");
   });
 
@@ -69,53 +60,41 @@
     saveModal.classList.remove("open");
   });
 
-  async function loadBrowser(path) {
-    const resp = await fetch("/api/browse?path=" + encodeURIComponent(path));
-    const data = await resp.json();
-    if (!resp.ok) {
-      alert(data.error || "Ошибка загрузки папок");
-      return;
+  // Сохраняет Blob на компьютер пользователя: если браузер поддерживает
+  // File System Access API (Chrome/Edge) - открывается системный диалог
+  // "Сохранить как" с выбором папки; иначе - обычная загрузка файла
+  // через ссылку (попадает в папку загрузок браузера).
+  async function saveBlobToUserComputer(blob, suggestedName) {
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: suggestedName,
+          types: [{
+            description: "WORD документ",
+            accept: { "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"] },
+          }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") {
+          throw e; // пользователь отменил диалог сохранения
+        }
+        // API недоступен по иной причине - используем запасной вариант ниже
+      }
     }
-    currentFolder = data.current;
-    browserPath.textContent = data.root_label + (data.current ? "/" + data.current : "");
-    browserList.innerHTML = "";
 
-    if (data.parent !== null) {
-      const up = document.createElement("div");
-      up.className = "up-item";
-      up.textContent = "⬆ Вверх";
-      up.addEventListener("click", () => loadBrowser(data.parent));
-      browserList.appendChild(up);
-    }
-
-    data.dirs.forEach((name) => {
-      const item = document.createElement("div");
-      item.className = "dir-item";
-      item.textContent = "📁 " + name;
-      item.addEventListener("dblclick", () => {
-        const next = data.current ? data.current + "/" + name : name;
-        loadBrowser(next);
-      });
-      browserList.appendChild(item);
-    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = suggestedName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
-
-  createFolderBtn.addEventListener("click", async () => {
-    const name = newFolderName.value.trim();
-    if (!name) return;
-    const resp = await fetch("/api/browse/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: currentFolder, name: name }),
-    });
-    const data = await resp.json();
-    if (!resp.ok) {
-      alert(data.error || "Не удалось создать папку");
-      return;
-    }
-    newFolderName.value = "";
-    loadBrowser(currentFolder);
-  });
 
   confirmSaveBtn.addEventListener("click", async () => {
     const filename = fileNameInput.value.trim();
@@ -131,7 +110,6 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          folder: currentFolder,
           filename: filename,
           incoming_number: incomingNumber,
           processed_date: processedDate,
@@ -143,8 +121,26 @@
         alert(data.error || "Ошибка сохранения");
         return;
       }
+
+      const fileResp = await fetch(data.download_url);
+      if (!fileResp.ok) {
+        alert("Файл сохранён на сервере, но не удалось получить его для загрузки на компьютер.");
+        return;
+      }
+      const blob = await fileResp.blob();
+
+      try {
+        await saveBlobToUserComputer(blob, data.filename);
+      } catch (e) {
+        if (e && e.name === "AbortError") {
+          statusLabel.textContent = "Сохранение отменено пользователем.";
+          return;
+        }
+        throw e;
+      }
+
       saveModal.classList.remove("open");
-      statusLabel.textContent = "Файл сохранён: " + data.path;
+      statusLabel.textContent = "Файл сохранён на ваш компьютер: " + data.filename;
     } catch (e) {
       alert("Не удалось сохранить файл: " + e);
     } finally {

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from flask import (
     Flask, render_template, request, redirect, url_for, flash,
-    session, send_file, jsonify, abort, send_from_directory
+    jsonify, abort, send_from_directory
 )
 from flask_login import (
     LoginManager, UserMixin, login_user, logout_user, login_required,
@@ -134,64 +134,10 @@ def serve_pdf_preview(token):
     abort(404)
 
 
-@app.route("/api/browse")
-@login_required
-def api_browse():
-    rel_path = request.args.get("path", "")
-    root = os.path.realpath(config.SAVE_ROOT_DIR)
-    target = os.path.realpath(os.path.join(root, rel_path.lstrip("/\\")))
-
-    if not (target == root or target.startswith(root + os.sep)):
-        return jsonify({"error": "Недопустимый путь"}), 400
-    if not os.path.isdir(target):
-        return jsonify({"error": "Папка не найдена"}), 404
-
-    entries = []
-    with os.scandir(target) as it:
-        for entry in it:
-            if entry.is_dir():
-                entries.append(entry.name)
-    entries.sort(key=str.lower)
-
-    rel_current = os.path.relpath(target, root)
-    rel_current = "" if rel_current == "." else rel_current.replace(os.sep, "/")
-
-    parent = None
-    if rel_current != "":
-        parent = os.path.dirname(rel_current)
-
-    return jsonify({
-        "root_label": config.SAVE_ROOT_DIR,
-        "current": rel_current,
-        "parent": parent,
-        "dirs": entries,
-    })
-
-
-@app.route("/api/browse/create", methods=["POST"])
-@login_required
-def api_browse_create():
-    data = request.get_json(force=True) or {}
-    rel_path = data.get("path", "")
-    name = secure_filename(data.get("name", "")).strip()
-    if not name:
-        return jsonify({"error": "Укажите имя папки"}), 400
-
-    root = os.path.realpath(config.SAVE_ROOT_DIR)
-    parent = os.path.realpath(os.path.join(root, rel_path.lstrip("/\\")))
-    if not (parent == root or parent.startswith(root + os.sep)):
-        return jsonify({"error": "Недопустимый путь"}), 400
-
-    new_dir = os.path.join(parent, name)
-    os.makedirs(new_dir, exist_ok=True)
-    return jsonify({"ok": True})
-
-
 @app.route("/api/save", methods=["POST"])
 @login_required
 def api_save():
     data = request.get_json(force=True) or {}
-    folder_rel = data.get("folder", "")
     filename = secure_filename(data.get("filename", "")).strip()
     incoming_number = data.get("incoming_number", "").strip()
     processed_date = data.get("processed_date", "").strip()
@@ -207,26 +153,29 @@ def api_save():
     if not filename.lower().endswith(".docx"):
         filename += ".docx"
 
-    root = os.path.realpath(config.SAVE_ROOT_DIR)
-    folder = os.path.realpath(os.path.join(root, folder_rel.lstrip("/\\")))
-    if not (folder == root or folder.startswith(root + os.sep)):
-        return jsonify({"error": "Недопустимый путь сохранения"}), 400
-    os.makedirs(folder, exist_ok=True)
-
-    full_path = os.path.join(folder, filename)
-    ocr.editable_text_to_docx(text, full_path)
+    # Служебная копия хранится на сервере под собственным именем, чтобы
+    # ссылка в реестре "Сканы" работала независимо от того, куда и под
+    # каким именем пользователь сохранит файл на своём компьютере.
+    archive_filename = f"{uuid.uuid4().hex}.docx"
+    archive_path = os.path.join(config.ARCHIVE_DIR, archive_filename)
+    ocr.editable_text_to_docx(text, archive_path)
 
     title = os.path.splitext(filename)[0]
-    saved_date = processed_date
     scan_id = db.add_scan(
         title=title,
         incoming_number=incoming_number,
-        saved_date=saved_date,
-        file_path=full_path,
+        saved_date=processed_date,
+        file_path=filename,
+        archive_filename=archive_filename,
         created_by=current_user.username,
     )
 
-    return jsonify({"ok": True, "scan_id": scan_id, "path": full_path})
+    return jsonify({
+        "ok": True,
+        "scan_id": scan_id,
+        "filename": filename,
+        "download_url": url_for("download_scan", scan_id=scan_id),
+    })
 
 
 # --------------------------------------------------------------------- сканы
@@ -244,11 +193,13 @@ def download_scan(scan_id):
     row = db.get_scan(scan_id)
     if row is None:
         abort(404)
-    path = row["file_path"]
-    if not os.path.isfile(path):
+    archive_name = row["archive_filename"]
+    if not os.path.isfile(os.path.join(config.ARCHIVE_DIR, archive_name)):
         abort(404)
-    directory, name = os.path.split(path)
-    return send_from_directory(directory, name, as_attachment=False)
+    return send_from_directory(
+        config.ARCHIVE_DIR, archive_name,
+        as_attachment=True, download_name=row["file_path"],
+    )
 
 
 if __name__ == "__main__":

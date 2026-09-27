@@ -10,7 +10,7 @@ instance/secret_key.txt
 storage/uploads/*
 !storage/uploads/.gitkeep
 
-storage/shared/*
-!storage/shared/.gitkeep
+storage/archive/*
+!storage/archive/.gitkeep
 
 .DS_Store
