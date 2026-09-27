@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Загрузка PDF-писем{% endblock %}
+{% block content %}
+<h1>Загрузка PDF-писем</h1>
+
+<div class="upload-bar">
+  <input type="file" id="pdfInput" accept="application/pdf">
+  <button id="recognizeBtn" disabled>Распознать</button>
+  <span id="statusLabel"></span>
+</div>
+
+<div class="split-view" id="splitView" style="display:none;">
+  <div class="pane pdf-pane">
+    <h2>Скан (PDF)</h2>
+    <iframe id="pdfFrame" title="PDF скан"></iframe>
+  </div>
+  <div class="pane docx-pane">
+    <h2>Распознанный текст (редактируемый)</h2>
+    <textarea id="docxText" spellcheck="false" placeholder="Здесь появится распознанный текст письма..."></textarea>
+    <div class="actions">
+      <button id="saveWordBtn">Сохранить WORD файл</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно сохранения -->
+<div class="modal-backdrop" id="saveModal">
+  <div class="modal">
+    <h2>Сохранение WORD файла</h2>
+    <label>Название файла
+      <input type="text" id="fileNameInput">
+    </label>
+    <label>№ входящего письма
+      <input type="text" id="incomingNumberInput">
+    </label>
+    <label>Дата обработки письма
+      <input type="date" id="processedDateInput">
+    </label>
+
+    <label>Папка для сохранения</label>
+    <div class="browser">
+      <div class="browser-path" id="browserPath"></div>
+      <div class="browser-list" id="browserList"></div>
+      <div class="browser-actions">
+        <input type="text" id="newFolderName" placeholder="Название новой папки">
+        <button type="button" id="createFolderBtn">Создать папку</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="cancelSaveBtn" class="secondary">Отмена</button>
+      <button type="button" id="confirmSaveBtn">Сохранить</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

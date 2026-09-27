@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Сканы{% endblock %}
+{% block content %}
+<h1>Сканы</h1>
+
+<div class="search-bar">
+  <input type="text" id="globalSearch" placeholder="Поиск по всем столбцам...">
+</div>
+
+<table class="scans-table" id="scansTable">
+  <thead>
+    <tr>
+      <th>№</th>
+      <th>Название письма</th>
+      <th>№ входящего письма</th>
+      <th>Дата сохранения</th>
+      <th>Путь к письму</th>
+    </tr>
+    <tr class="filter-row">
+      <th><input type="text" data-col="0" class="col-filter"></th>
+      <th><input type="text" data-col="1" class="col-filter"></th>
+      <th><input type="text" data-col="2" class="col-filter"></th>
+      <th><input type="text" data-col="3" class="col-filter"></th>
+      <th><input type="text" data-col="4" class="col-filter"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in scans %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ row["title"] }}</td>
+      <td>{{ row["incoming_number"] }}</td>
+      <td>{{ row["saved_date"] }}</td>
+      <td><a href="{{ url_for('download_scan', scan_id=row['id']) }}" target="_blank">{{ row["file_path"] }}</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p id="noResults" style="display:none;">Ничего не найдено.</p>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/scans.js') }}"></script>
+{% endblock %}

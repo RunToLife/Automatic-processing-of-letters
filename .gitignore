@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+instance/*.db
+instance/secret_key.txt
+!instance/.gitkeep
+
+storage/uploads/*
+!storage/uploads/.gitkeep
+
+storage/shared/*
+!storage/shared/.gitkeep
+
+.DS_Store
