@@ -1,0 +1,39 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Обработка писем{% endblock %}</title>
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block head %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<header class="topbar">
+  <div class="brand">Автоматическая обработка писем</div>
+  <nav>
+    <a href="{% url 'upload_page' %}" class="{% if request.resolver_match.url_name == 'upload_page' %}active{% endif %}">Загрузка PDF-писем</a>
+    <a href="{% url 'scans_page' %}" class="{% if request.resolver_match.url_name == 'scans_page' %}active{% endif %}">Сканы</a>
+  </nav>
+  <div class="user-box">
+    <span>{{ user.username }}</span>
+    <a href="{% url 'logout' %}">Выйти</a>
+  </div>
+</header>
+{% endif %}
+
+<main class="content">
+  {% if messages %}
+    <div class="flash-container">
+    {% for message in messages %}
+      <div class="flash flash-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+    </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

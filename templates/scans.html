@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Сканы{% endblock %}
+{% block content %}
+<h1>Сканы</h1>
+
+<div class="search-bar">
+  <input type="text" id="globalSearch" placeholder="Поиск по всем столбцам...">
+</div>
+
+<table class="scans-table" id="scansTable">
+  <thead>
+    <tr>
+      <th>№</th>
+      <th>Название письма</th>
+      <th>№ входящего письма</th>
+      <th>Дата сохранения</th>
+      <th>Путь к письму</th>
+    </tr>
+    <tr class="filter-row">
+      <th><input type="text" data-col="0" class="col-filter"></th>
+      <th><input type="text" data-col="1" class="col-filter"></th>
+      <th><input type="text" data-col="2" class="col-filter"></th>
+      <th><input type="text" data-col="3" class="col-filter"></th>
+      <th><input type="text" data-col="4" class="col-filter"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for scan in scans %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ scan.title }}</td>
+      <td>{{ scan.incoming_number }}</td>
+      <td>{{ scan.saved_date }}</td>
+      <td><a href="{% url 'download_scan' scan_id=scan.id %}" target="_blank">{{ scan.file_path }}</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p id="noResults" style="display:none;">Ничего не найдено.</p>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/scans.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Вход в систему{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <form class="login-card" method="post">
+    {% csrf_token %}
+    <h1>Вход в систему</h1>
+    <label>Логин
+      <input type="text" name="username" autocomplete="username" autofocus required>
+    </label>
+    <label>Пароль
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit">Войти</button>
+  </form>
+</div>
+{% endblock %}
