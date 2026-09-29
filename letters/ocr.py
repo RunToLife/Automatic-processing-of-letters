@@ -11,6 +11,12 @@ from docx.shared import Pt
 if settings.TESSERACT_CMD:
     pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_CMD
 
+if settings.TESSDATA_PREFIX:
+    # pytesseract наследует os.environ процесса при запуске tesseract.exe
+    # (см. pytesseract.subprocess_args()), поэтому достаточно выставить
+    # переменную окружения здесь, до первого вызова OCR.
+    os.environ["TESSDATA_PREFIX"] = settings.TESSDATA_PREFIX
+
 
 def pdf_to_images(pdf_path: str, dpi: int = None) -> list:
     """Рендерит каждую страницу PDF в изображение PIL с высоким DPI
@@ -32,7 +38,14 @@ def pdf_to_images(pdf_path: str, dpi: int = None) -> list:
 
 def ocr_image_to_text(image: Image.Image, languages: str = None) -> str:
     languages = languages or settings.OCR_LANGUAGES
-    # psm 6: считаем, что на странице единый блок текста - подходит для писем
+    # psm 6: считаем, что на странице единый блок текста - подходит для писем.
+    # Путь к tessdata передаём только через переменную окружения
+    # TESSDATA_PREFIX (выставлена выше), а не через "--tessdata-dir <путь>"
+    # в config: pytesseract
+    # разбирает config через shlex.split(..., posix=False) на Windows,
+    # который НЕ убирает кавычки вокруг пути - путь с пробелами (например,
+    # "C:\Program Files\...") придёт в tesseract.exe буквально с кавычками
+    # как часть имени файла и сломается.
     text = pytesseract.image_to_string(image, lang=languages, config="--psm 6")
     return text.strip()
 

@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.venv_build/
 
 instance/*.db
 instance/secret_key.txt
@@ -14,5 +15,17 @@ storage/archive/*
 !storage/archive/.gitkeep
 
 staticfiles/
+logs/
+
+# PyInstaller
+build/
+dist/
 
 .DS_Store
+
+# Реальные бинарники Tesseract не хранятся в git (см. vendor/tesseract/README.md) -
+# слишком тяжёлые и платформенно-специфичные, чтобы коммитить их в репозиторий.
+vendor/tesseract/*.exe
+vendor/tesseract/*.dll
+vendor/tesseract/tessdata/*.traineddata
+vendor/tesseract/LICENSE.txt
