@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Сканы{% endblock %}
 {% block content %}
 <h1>Сканы</h1>
@@ -25,13 +26,13 @@
     </tr>
   </thead>
   <tbody>
-    {% for row in scans %}
+    {% for scan in scans %}
     <tr>
-      <td>{{ loop.index }}</td>
-      <td>{{ row["title"] }}</td>
-      <td>{{ row["incoming_number"] }}</td>
-      <td>{{ row["saved_date"] }}</td>
-      <td><a href="{{ url_for('download_scan', scan_id=row['id']) }}" target="_blank">{{ row["file_path"] }}</a></td>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ scan.title }}</td>
+      <td>{{ scan.incoming_number }}</td>
+      <td>{{ scan.saved_date }}</td>
+      <td><a href="{% url 'download_scan' scan_id=scan.id %}" target="_blank">{{ scan.file_path }}</a></td>
     </tr>
     {% endfor %}
   </tbody>
@@ -40,5 +41,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/scans.js') }}"></script>
+<script src="{% static 'js/scans.js' %}"></script>
 {% endblock %}

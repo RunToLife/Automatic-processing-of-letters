@@ -13,4 +13,6 @@ storage/uploads/*
 storage/archive/*
 !storage/archive/.gitkeep
 
+staticfiles/
+
 .DS_Store

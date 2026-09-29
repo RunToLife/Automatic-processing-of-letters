@@ -51,5 +51,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% load static %}
+<script src="{% static 'js/upload.js' %}"></script>
 {% endblock %}

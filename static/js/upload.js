@@ -1,4 +1,6 @@
 (function () {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
   const pdfInput = document.getElementById("pdfInput");
   const recognizeBtn = document.getElementById("recognizeBtn");
   const statusLabel = document.getElementById("statusLabel");
@@ -28,7 +30,11 @@
     statusLabel.textContent = "Распознавание письма, это может занять некоторое время...";
 
     try {
-      const resp = await fetch("/api/recognize", { method: "POST", body: formData });
+      const resp = await fetch("/api/recognize", {
+        method: "POST",
+        headers: { "X-CSRFToken": csrfToken },
+        body: formData,
+      });
       const data = await resp.json();
       if (!resp.ok) {
         statusLabel.textContent = "";
@@ -108,7 +114,7 @@
     try {
       const resp = await fetch("/api/save", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
         body: JSON.stringify({
           filename: filename,
           incoming_number: incomingNumber,
