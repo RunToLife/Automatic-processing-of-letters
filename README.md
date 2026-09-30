@@ -32,7 +32,7 @@
 2. **Tesseract OCR** (движок распознавания; это отдельная программа, а не библиотека Python):
    * Windows: установщик [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
      (путь по умолчанию `C:\Program Files\Tesseract-OCR`). Языки выбирать не обязательно — они берутся из папки
-     `tessdata/` проекта. Если `tesseract` не находится в PATH — в `run.bat` раскомментируйте строку `set TESSERACT_CMD=...`.
+     `tessdata/` проекта. Из папки по умолчанию `C:\Program Files\Tesseract-OCR` он подхватывается автоматически; если установлен в другое место — в `run.bat` раскомментируйте и поправьте строку `set TESSERACT_CMD=...`.
    * Ubuntu/Debian: `sudo apt install tesseract-ocr`
 3. Больше ничего: Django, PyMuPDF, python-docx, waitress и остальное ставится из `vendor/wheels`.
 
