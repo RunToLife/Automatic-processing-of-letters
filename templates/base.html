@@ -1,0 +1,25 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Гендальф{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'letters/style.css' %}">
+</head>
+<body>
+{% if user.is_authenticated %}
+<header class="top">
+  <a class="brand" href="{% url 'upload' %}"><span class="hat">🧙</span> Гендальф</a>
+  <nav>
+    <a href="{% url 'upload' %}" class="{% if request.resolver_match.url_name == 'upload' %}active{% endif %}">Загрузка PDF-писем</a>
+    <a href="{% url 'scans' %}" class="{% if request.resolver_match.url_name == 'scans' %}active{% endif %}">СКАНЫ</a>
+    {% if user.is_staff %}<a href="{% url 'admin:index' %}">Пользователи</a>{% endif %}
+  </nav>
+  <form method="post" action="{% url 'logout' %}" class="logout">{% csrf_token %}
+    <span class="who">{{ user.username }}</span><button class="btn ghost" type="submit">Выйти</button>
+  </form>
+</header>
+{% endif %}
+{% block content %}{% endblock %}
+</body>
+</html>
