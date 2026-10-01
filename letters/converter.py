@@ -166,9 +166,10 @@ def _ocr_page(page, pytesseract):
     return out
 
 
-def convert_pdf(path) -> ConversionResult:
+def convert_pdf(data: bytes) -> ConversionResult:
+    """data — содержимое PDF (без временных файлов: на Windows они мешают открытию)."""
     try:
-        doc = fitz.open(path)
+        doc = fitz.open(stream=data, filetype='pdf')
     except Exception as e:  # noqa: BLE001
         raise ConversionError(f'Не удалось открыть PDF: {e}') from e
     if doc.needs_pass:

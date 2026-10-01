@@ -1,6 +1,5 @@
 import json
 import re
-import tempfile
 from datetime import date
 from urllib.parse import quote
 
@@ -34,14 +33,10 @@ def convert(request):
         return JsonResponse({'error': 'Нужен файл в формате PDF.'}, status=400)
     if f.size > settings.MAX_PDF_MB * 1024 * 1024:
         return JsonResponse({'error': f'Файл больше {settings.MAX_PDF_MB} МБ.'}, status=400)
-    with tempfile.NamedTemporaryFile(suffix='.pdf') as tmp:
-        for chunk in f.chunks():
-            tmp.write(chunk)
-        tmp.flush()
-        try:
-            res = convert_pdf(tmp.name)
-        except ConversionError as e:
-            return JsonResponse({'error': str(e)}, status=422)
+    try:
+        res = convert_pdf(f.read())
+    except ConversionError as e:
+        return JsonResponse({'error': str(e)}, status=422)
     return JsonResponse({'html': res.html, 'pages': res.pages, 'ocr_pages': res.ocr_pages,
                          'warnings': res.warnings})
 
