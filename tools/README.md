@@ -11,12 +11,25 @@
 | `assets/typing.svg` | «печатающийся» заголовок со слоганами | 860×48 |
 | `assets/stack.svg` | неоновые бейджи реального стека (`requirements.txt`) | 860×90 |
 | `assets/*-light.svg` | варианты для светлой темы GitHub (подключаются через `<picture>`) | — |
+| `letters/static/letters/img/*.svg` | ассеты самого веб-сервиса: печать-логотип, фавикон, фон входа (башня и Око), фон приложения, конверт-заглушка, сканирующее Око | — |
+
+## Оформление самого сервиса
+
+Интерфейс «Гендальфа» оформлен в том же стиле (киберпанк × Властелин колец):
+
+* `letters/static/letters/style.css` — вся тема приложения (CSS-переменные `--gold`, `--cyan`, `--mag`, `--red`, `--bg`, `--mut` в начале файла);
+* `letters/static/letters/admin.css` + `templates/admin/base_site.html` — та же тема для раздела «Пользователи» (`/admin/`);
+* `templates/base.html`, `templates/registration/login.html` — логотип-печать и фавикон;
+* SVG-фоны и иконки собирает `tools/visuals/service.py` (`python3 tools/build_visuals.py service`).
+
+Документ в редакторе («бумага») намеренно остаётся светлым: это то, что уйдёт в Word. Анимации отключаются
+при `prefers-reduced-motion`; внешних шрифтов и картинок нет — сервис работает офлайн в закрытой сети.
 
 ## Пересборка
 
 ```bash
 python3 tools/build_visuals.py            # всё
-python3 tools/build_visuals.py banner     # только баннер (также: divider footer typing stack)
+python3 tools/build_visuals.py banner     # только баннер (также: divider footer typing stack service)
 ```
 
 Нужен только Python 3 (стандартная библиотека).

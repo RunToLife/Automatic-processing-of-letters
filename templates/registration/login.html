@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Вход — Гендальф{% endblock %}
 {% block content %}
 <main class="login-wrap">
   <form method="post" class="card login">
     {% csrf_token %}
-    <div class="logo">🧙</div>
+    <img class="logo" src="{% static 'letters/img/seal.svg' %}" alt="">
     <h1>Гендальф</h1>
     <p class="muted">Обработка писем из сканов</p>
     {% if form.errors %}<div class="alert">Неверный логин или пароль.</div>{% endif %}

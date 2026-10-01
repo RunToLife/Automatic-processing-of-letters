@@ -1,0 +1,46 @@
+/* Админка «Пользователи» в стиле сервиса (переопределяет переменные админки Django). */
+:root,html[data-theme="light"],html[data-theme="dark"]{
+  --primary:#0b1022;--secondary:#1a2140;--accent:#ffb800;--primary-fg:#d7defa;
+  --body-fg:#d7defa;--body-bg:#05060f;--body-quiet-color:#8d96c9;--body-loud-color:#fff;
+  --header-color:#ffb800;--header-branding-color:#ffb800;--header-bg:#0b1022;--header-link-color:#00f0ff;
+  --breadcrumbs-fg:#8d96c9;--breadcrumbs-link-fg:#00f0ff;--breadcrumbs-bg:#1a2140;
+  --link-fg:#00f0ff;--link-hover-color:#ff2bd6;--link-selected-fg:#ffb800;
+  --hairline-color:rgba(0,240,255,.2);--border-color:rgba(0,240,255,.28);--error-fg:#ff7a7a;
+  --message-success-bg:rgba(255,184,0,.14);--message-warning-bg:rgba(255,43,214,.14);--message-error-bg:rgba(255,26,26,.14);
+  --darkened-bg:#0b1022;--selected-bg:#1a2140;--selected-row:#1a2140;
+  --button-fg:#fff;--button-bg:#1a2140;--button-hover-bg:#2a3566;
+  --default-button-bg:#0a8f9b;--default-button-hover-bg:#00b9c9;
+  --close-button-bg:#3a4166;--close-button-hover-bg:#4a5280;--delete-button-bg:#a31d1d;--delete-button-hover-bg:#c92a2a;
+  --object-tools-fg:#fff;--object-tools-bg:#1a2140;--object-tools-hover-bg:#2a3566;
+  --font-family-primary:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  color-scheme:dark}
+body{background:#05060f url(img/app-bg.svg) center bottom/cover fixed no-repeat;color:var(--body-fg)}
+#header{position:relative;height:auto;padding:12px 26px;background:linear-gradient(180deg,rgba(5,6,15,.95),rgba(10,15,36,.92));
+  border-bottom:1px solid rgba(0,240,255,.25);box-shadow:0 0 28px rgba(0,240,255,.14)}
+#header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,transparent,#00f0ff,#ff2bd6,#ffb800,#00f0ff,transparent);box-shadow:0 0 10px rgba(0,240,255,.6)}
+#site-name,#site-name a{font:800 20px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace!important;letter-spacing:.16em;text-transform:uppercase;
+  color:#ffb800!important;text-shadow:0 0 14px rgba(255,184,0,.55)}
+#site-name img.seal{width:38px;height:38px;vertical-align:middle;margin-right:8px}
+.back-to-app{font:600 12px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;border:1px solid rgba(0,240,255,.4);
+  border-radius:3px;color:#00f0ff!important;text-decoration:none;margin-left:12px}
+.back-to-app:hover{background:rgba(0,240,255,.15);box-shadow:0 0 14px rgba(0,240,255,.4)}
+#user-tools{font:600 12px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase}
+div.breadcrumbs{background:rgba(26,33,64,.7);border:0;border-bottom:1px solid rgba(0,240,255,.15)}
+#content{color:var(--body-fg)}
+h1,h2,.module h2,.module caption,.inline-group h2{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;color:#ffb800}
+.module,.module table,#changelist .paginator,fieldset.module{background:rgba(8,12,30,.82)}
+.module h2,.module caption,.inline-group h2{background:linear-gradient(90deg,rgba(0,240,255,.22),rgba(26,33,64,.9));color:#00f0ff;text-shadow:0 0 8px rgba(0,240,255,.5)}
+.module{border:1px solid rgba(0,240,255,.25);border-radius:4px}
+table thead th{background:#0d1330;color:#00f0ff;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(0,240,255,.35)}
+tr:nth-child(even) td,tr:nth-child(even) th{background:rgba(26,33,64,.35)}
+tr:hover td{background:rgba(0,240,255,.07)}
+input[type=text],input[type=password],input[type=email],input[type=url],input[type=number],input[type=search],textarea,select{
+  background:rgba(5,6,15,.85)!important;color:var(--body-fg)!important;border:1px solid rgba(0,240,255,.32)!important;border-radius:3px}
+input:focus,textarea:focus,select:focus{outline:0;border-color:#00f0ff!important;box-shadow:0 0 14px rgba(0,240,255,.35)}
+.button,input[type=submit],input[type=button],.submit-row input,a.button{border:1px solid rgba(0,240,255,.5);border-radius:3px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.button.default,input[type=submit].default,.submit-row input.default{border-color:#00f0ff;box-shadow:0 0 14px rgba(0,240,255,.35)}
+.object-tools a{border-radius:3px;border:1px solid rgba(0,240,255,.4);font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase}
+#footer{color:var(--body-quiet-color)}
+.login #container{background:rgba(6,9,24,.82);border:1px solid rgba(0,240,255,.35);border-radius:6px;box-shadow:0 14px 70px rgba(0,0,0,.8),0 0 40px rgba(0,240,255,.15)}

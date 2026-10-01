@@ -39,11 +39,11 @@ def seal(cx, cy, R, anim, uid='s', period=3.2):
 
 
 # ----------------------------------------------------------------- горы ----
-def ridge(base, peaks, step=26, seed=1, jitter=5):
+def ridge(base, peaks, step=26, seed=1, jitter=5, xmax=1300):
     rnd = random.Random(seed)
     pts = []
     x = -20.0
-    while x <= 1300:
+    while x <= xmax:
         h = sum(a * math.exp(-abs(x - px) / w) for px, a, w in peaks)
         pts.append((x, base - h + rnd.uniform(-jitter, jitter)))
         x += step
