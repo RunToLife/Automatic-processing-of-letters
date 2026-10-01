@@ -1,9 +1,72 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
+  <img alt="Гендальф — письма из сканов в Word. Хаос писем слева проходит под сканирующим Оком и ложится ровными стопками .docx справа." src="assets/banner.svg" width="100%">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/typing.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/typing-light.svg">
+  <img alt="Скан письма → Word-документ. Автоматически. OCR Tesseract: русский + английский. Таблицы остаются таблицами. Реестр «СКАНЫ» с фильтрами и поиском." src="assets/typing.svg">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/stack.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/stack-light.svg">
+  <img alt="Python 3.11/3.12 · Django 5.1 · PyMuPDF · Tesseract OCR · python-docx · Pillow · NumPy · SQLite · Waitress · WhiteNoise" src="assets/stack.svg">
+</picture>
+
+</div>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/divider.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">
+  <img alt="" src="assets/divider.svg" width="100%">
+</picture>
+</p>
+
 # Гендальф — автоматическая обработка писем из сканов в Word
+
+> **Интерактивная сцена:** [`docs/index.html`](docs/index.html) — письма летят к курсору и сортируются (после включения GitHub Pages: *Settings → Pages → Branch → `/docs`*).
+
+## О проекте
 
 Веб-приложение на **Django** для локальной сети. Пользователь загружает скан письма (PDF), система
 преобразует его в Word-документ (текстовые PDF разбираются напрямую, сканы распознаются OCR Tesseract,
 русский + английский). Скан и документ показываются рядом, документ можно править и сохранить как `.docx`
 на свой компьютер. Все сохранения попадают в общий реестр «СКАНЫ» с фильтрами и поиском.
+
+### Как работает преобразование
+
+* Страницы с текстовым слоем: PyMuPDF извлекает абзацы, жирный/курсив, размеры шрифтов (→ заголовки), выравнивание, картинки.
+* Таблицы остаются таблицами: в текстовых PDF их находит PyMuPDF; на сканах ищутся линии сетки (numpy), линии стираются перед OCR, слова раскладываются по ячейкам, объединённые ячейки (colspan/rowspan) сохраняются. В Word таблица создаётся с границами. Таблицы без линий (только выравнивание пробелами) распознаются как обычный текст.
+* Страницы-сканы: рендер 300 dpi → оттенки серого + автоконтраст → Tesseract (`rus+eng`, LSTM) → абзацы, заголовки, выравнивание.
+* Результат правится в окне; при сохранении собирается `.docx` (Times New Roman 12, поля 2 см, разрывы страниц сохраняются).
+
+Качество OCR зависит от скана: чистые сканы 300 dpi распознаются почти безошибочно; сложные таблицы, печати
+и рукописный текст нужно вычитывать в окне редактирования.
+
+### Что лежит в репозитории
+
+| Путь | Назначение |
+|---|---|
+| `gendalf/`, `letters/`, `templates/` | код приложения |
+| `db.sqlite3` | готовая база SQLite: таблицы и пользователь `admin/admin` (создаётся миграцией `letters/migrations/0002_create_admin.py`) |
+| `vendor/wheels/` | **все Python-библиотеки** (Windows x64 и Linux x64, Python 3.11/3.12) — установка без интернета |
+| `tessdata/` | языковые модели OCR (`rus`, `eng`) — доустанавливать языки не нужно |
+| `requirements.txt` | список библиотек |
+| `setup.bat` / `setup.sh` | установка; `run.bat` / `run.sh` — запуск |
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/divider.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">
+  <img alt="" src="assets/divider.svg" width="100%">
+</picture>
+</p>
 
 ## Возможности
 
@@ -15,18 +78,17 @@
 * **СКАНЫ**: таблица (№ п/п, название, № входящего, дата сохранения, дата обработки, путь-ссылка),
   фильтр по каждому столбцу и поиск слова по всем столбцам сразу.
 
-## Что лежит в репозитории
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/divider.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">
+  <img alt="" src="assets/divider.svg" width="100%">
+</picture>
+</p>
 
-| Путь | Назначение |
-|---|---|
-| `gendalf/`, `letters/`, `templates/` | код приложения |
-| `db.sqlite3` | готовая база SQLite: таблицы и пользователь `admin/admin` (создаётся миграцией `letters/migrations/0002_create_admin.py`) |
-| `vendor/wheels/` | **все Python-библиотеки** (Windows x64 и Linux x64, Python 3.11/3.12) — установка без интернета |
-| `tessdata/` | языковые модели OCR (`rus`, `eng`) — доустанавливать языки не нужно |
-| `requirements.txt` | список библиотек |
-| `setup.bat` / `setup.sh` | установка; `run.bat` / `run.sh` — запуск |
+## Быстрый старт
 
-## Что нужно для запуска (на сервере — компьютере в сети)
+### Что нужно для запуска (на сервере — компьютере в сети)
 
 1. **Python 3.11 или 3.12** (64-бит). На Windows при установке поставьте галочку *Add Python to PATH*.
 2. **Tesseract OCR** (движок распознавания; это отдельная программа, а не библиотека Python):
@@ -38,7 +100,7 @@
 
 Пользователям на своих компьютерах нужен только современный браузер (Chrome/Edge/Firefox).
 
-## Алгоритм запуска
+### Алгоритм запуска
 
 **Windows**
 1. Скопируйте папку проекта на сервер.
@@ -80,7 +142,24 @@ python -m venv .venv
 | `TESSERACT_CMD` | полный путь к `tesseract.exe`, если его нет в PATH |
 | `GENDALF_CSRF_ORIGINS` | адреса через запятую (нужно только за прокси/по HTTPS) |
 
-## Как сохраняется файл на машину пользователя
+### Безопасность
+
+Сервис рассчитан на закрытую локальную сеть (HTTP без шифрования). Смените пароль `admin`, задайте
+`GENDALF_SECRET_KEY`, не публикуйте порт в интернет.
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/divider.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">
+  <img alt="" src="assets/divider.svg" width="100%">
+</picture>
+</p>
+
+## Использование
+
+После запуска откройте адрес сервера в браузере, войдите (`admin` / `admin`, пароль сразу смените), загрузите PDF-письмо — слева появится скан, справа редактируемый Word-документ; кнопка **«Сохранить WORD файл»** добавляет запись в реестр **«СКАНЫ»** (подробности — в разделе «Возможности»).
+
+### Как сохраняется файл на машину пользователя
 
 Сервер собирает `.docx`, а **запись файла выполняет браузер пользователя**:
 
@@ -95,23 +174,63 @@ python -m venv .venv
 `путь\название.docx` в виде ссылки. Браузеры не открывают `file://` со страниц по http, поэтому клик по ссылке
 ещё и копирует путь в буфер обмена — его можно вставить в «Проводник».
 
-## Как работает преобразование
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/divider.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">
+  <img alt="" src="assets/divider.svg" width="100%">
+</picture>
+</p>
 
-* Страницы с текстовым слоем: PyMuPDF извлекает абзацы, жирный/курсив, размеры шрифтов (→ заголовки), выравнивание, картинки.
-* Таблицы остаются таблицами: в текстовых PDF их находит PyMuPDF; на сканах ищутся линии сетки (numpy), линии стираются перед OCR, слова раскладываются по ячейкам, объединённые ячейки (colspan/rowspan) сохраняются. В Word таблица создаётся с границами. Таблицы без линий (только выравнивание пробелами) распознаются как обычный текст.
-* Страницы-сканы: рендер 300 dpi → оттенки серого + автоконтраст → Tesseract (`rus+eng`, LSTM) → абзацы, заголовки, выравнивание.
-* Результат правится в окне; при сохранении собирается `.docx` (Times New Roman 12, поля 2 см, разрывы страниц сохраняются).
+## Roadmap
 
-Качество OCR зависит от скана: чистые сканы 300 dpi распознаются почти безошибочно; сложные таблицы, печати
-и рукописный текст нужно вычитывать в окне редактирования.
+Идеи для развития выведены из ограничений, описанных выше. Это направления, а не обязательства.
 
-## Безопасность
+- [ ] Таблицы без линий сетки (только выравнивание пробелами) — сейчас распознаются как обычный текст.
+- [ ] Рукописный текст и печати — сейчас такие места нужно вычитывать в окне редактирования.
+- [ ] HTTPS «из коробки» — сейчас сервис рассчитан на закрытую сеть по HTTP, а выбор папки в браузере работает только на `localhost`/HTTPS.
+- [ ] Автотесты конвертера и представлений (`letters/tests.py` пока пуст).
 
-Сервис рассчитан на закрытую локальную сеть (HTTP без шифрования). Смените пароль `admin`, задайте
-`GENDALF_SECRET_KEY`, не публикуйте порт в интернет.
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/divider.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">
+  <img alt="" src="assets/divider.svg" width="100%">
+</picture>
+</p>
 
-## Разработка
+## Contributing
+
+1. Сделайте форк и создайте ветку под свою задачу.
+2. Запустите проект локально в режиме разработки (команда ниже) и проверьте изменение руками на PDF-письме и скане.
+3. Откройте pull request с описанием: что изменено и как проверить.
+
+**Запуск для разработки**
 
 ```bash
 GENDALF_DEBUG=1 .venv/bin/python manage.py runserver
 ```
+
+Визуальные ассеты (`assets/*.svg`) собираются генератором — не правьте SVG руками, а меняйте цвета и тексты в `tools/visuals/*.py` и запускайте `python3 tools/build_visuals.py` (подробности — в [`tools/README.md`](tools/README.md)).
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/divider.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">
+  <img alt="" src="assets/divider.svg" width="100%">
+</picture>
+</p>
+
+## License
+
+Файл лицензии в репозиторий пока не добавлен, поэтому права на код сохраняются за его автором(ами). Для использования или распространения свяжитесь с владельцем репозитория ([RunToLife](https://github.com/RunToLife)).
+
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/footer.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/footer-light.svg">
+  <img alt="Золотая печать с руной и цепочка сигнальных маяков" src="assets/footer.svg" width="100%">
+</picture>
+
+</div>

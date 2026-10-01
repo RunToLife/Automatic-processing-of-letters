@@ -4,12 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Гендальф{% endblock %}</title>
+<meta name="theme-color" content="#05060f">
+<link rel="icon" type="image/svg+xml" href="{% static 'letters/img/favicon.svg' %}">
 <link rel="stylesheet" href="{% static 'letters/style.css' %}">
 </head>
 <body>
 {% if user.is_authenticated %}
 <header class="top">
-  <a class="brand" href="{% url 'upload' %}"><span class="hat">🧙</span> Гендальф</a>
+  <a class="brand" href="{% url 'upload' %}"><img class="seal" src="{% static 'letters/img/seal.svg' %}" alt=""> Гендальф</a>
   <nav>
     <a href="{% url 'upload' %}" class="{% if request.resolver_match.url_name == 'upload' %}active{% endif %}">Загрузка PDF-писем</a>
     <a href="{% url 'scans' %}" class="{% if request.resolver_match.url_name == 'scans' %}active{% endif %}">СКАНЫ</a>
