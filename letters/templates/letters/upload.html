@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Загрузка PDF-писем — Гендальф{% endblock %}
+{% block content %}
+<main class="work">
+  <div class="toolbar-row">
+    <label class="btn primary" for="pdfInput">📄 Выбрать PDF…</label>
+    <input id="pdfInput" type="file" accept="application/pdf,.pdf" hidden>
+    <span id="fileName" class="muted">Файл не выбран (можно перетащить PDF на страницу)</span>
+    <span class="spacer"></span>
+    <span id="status" class="muted"></span>
+    <button id="saveBtn" class="btn success" disabled>💾 Сохранить WORD файл</button>
+  </div>
+
+  <div class="panes">
+    <section class="pane">
+      <h2>PDF-скан</h2>
+      <div class="pane-body pdf"><iframe id="pdfFrame" title="PDF"></iframe>
+        <div class="placeholder" id="pdfPh">Здесь появится скан письма</div></div>
+    </section>
+    <section class="pane">
+      <h2>WORD-документ <small class="muted">— можно редактировать</small></h2>
+      <div class="editor-tools" id="tools">
+        <button type="button" data-cmd="undo" title="Отменить">↶</button><button type="button" data-cmd="redo" title="Повторить">↷</button><i></i>
+        <button type="button" data-cmd="bold"><b>Ж</b></button><button type="button" data-cmd="italic"><em>К</em></button><button type="button" data-cmd="underline"><u>Ч</u></button><i></i>
+        <button type="button" data-cmd="justifyLeft">⬅</button><button type="button" data-cmd="justifyCenter">↔</button><button type="button" data-cmd="justifyRight">➡</button><i></i>
+        <button type="button" data-cmd="insertUnorderedList">• Список</button><button type="button" data-cmd="insertOrderedList">1. Список</button><i></i>
+        <select id="blockSel"><option value="p">Текст</option><option value="h2">Заголовок</option><option value="h3">Подзаголовок</option></select>
+      </div>
+      <div class="pane-body"><div id="editor" class="editor" contenteditable="true" spellcheck="true" lang="ru"></div>
+        <div class="placeholder" id="docPh">Здесь появится WORD-документ после обработки</div>
+        <div class="busy" id="busy" hidden><div class="spin"></div><div>Идёт распознавание, подождите…</div></div></div>
+    </section>
+  </div>
+</main>
+
+<dialog id="saveDlg">
+  <form method="dialog" id="saveForm" class="card dlg">
+    <h3>Сохранение WORD файла</h3>
+    <label>Название файла<input id="fName" required placeholder="Например: Письмо в Минфин"></label>
+    <label>№ входящего письма<input id="fNum" placeholder="Например: 15-123/2025"></label>
+    <label>Дата обработки письма<input id="fDate" type="date" value="{{ today }}" required></label>
+    <label>Папка для сохранения
+      <div class="row"><input id="fFolder" placeholder="C:\Письма  или  \\сервер\общая\Письма">
+      <button type="button" id="pickDir" class="btn ghost">Выбрать папку…</button></div>
+      <small class="muted" id="dirHint"></small></label>
+    <div class="alert" id="dlgErr" hidden></div>
+    <div class="row end"><button type="button" class="btn ghost" id="cancelSave">Отмена</button>
+      <button type="submit" class="btn success" id="confirmSave">Сохранить</button></div>
+  </form>
+</dialog>
+<script>window.GENDALF = {convertUrl: "{% url 'convert' %}", docxUrl: "{% url 'build_docx' %}", registerUrl: "{% url 'register' %}", scansUrl: "{% url 'scans' %}", maxMb: {{ max_mb }}};</script>
+<script src="{% static 'letters/upload.js' %}"></script>
+{% endblock %}

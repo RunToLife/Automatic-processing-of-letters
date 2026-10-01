@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}СКАНЫ — Гендальф{% endblock %}
+{% block content %}
+<main class="work">
+  <form method="get" id="filterForm">
+    <div class="toolbar-row">
+      <h1 class="h">СКАНЫ</h1>
+      <span class="spacer"></span>
+      <input class="search" type="search" name="q" value="{{ q }}" placeholder="🔍 Поиск по слову во всех столбцах">
+      <button class="btn primary" type="submit">Найти</button>
+      <a class="btn ghost" href="{% url 'scans' %}">Сбросить</a>
+    </div>
+    <div class="card table-card">
+      <table class="grid">
+        <thead>
+          <tr><th class="n">№ п/п</th><th>Название письма</th><th>№ входящего письма</th>
+              <th>Дата сохранения письма</th><th>Дата обработки письма</th><th>Путь к письму</th></tr>
+          <tr class="filters"><td></td>
+            <td><input name="f_title" value="{{ f.f_title }}" placeholder="фильтр"></td>
+            <td><input name="f_num" value="{{ f.f_num }}" placeholder="фильтр"></td>
+            <td><input name="f_saved" value="{{ f.f_saved }}" placeholder="напр. 05.2025"></td>
+            <td><input name="f_proc" value="{{ f.f_proc }}" placeholder="напр. 05.2025"></td>
+            <td><input name="f_path" value="{{ f.f_path }}" placeholder="фильтр"></td></tr>
+        </thead>
+        <tbody>
+        {% for r in page %}
+          <tr><td class="n">{{ offset|add:forloop.counter }}</td><td>{{ r.title }}</td><td>{{ r.incoming_number }}</td>
+            <td>{{ r.saved_display }}</td><td>{{ r.processed_display }}</td>
+            <td><a class="pathlink" href="{{ r.file_url }}" data-path="{{ r.path }}" title="Открыть / скопировать путь">{{ r.path }}</a></td></tr>
+        {% empty %}
+          <tr><td colspan="6" class="empty">Ничего не найдено</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="toolbar-row muted">Найдено: {{ total }}
+      <span class="spacer"></span>
+      {% if page.has_previous %}<a class="btn ghost" href="?{{ qs }}&page={{ page.previous_page_number }}">←</a>{% endif %}
+      {% if page.paginator.num_pages > 1 %}Стр. {{ page.number }} из {{ page.paginator.num_pages }}{% endif %}
+      {% if page.has_next %}<a class="btn ghost" href="?{{ qs }}&page={{ page.next_page_number }}">→</a>{% endif %}
+    </div>
+  </form>
+</main>
+<script>
+// Ссылка-путь: пробуем открыть file://, а также копируем путь в буфер (браузеры блокируют file:// со страниц по http)
+document.querySelectorAll('.pathlink').forEach(a => a.addEventListener('click', () => {
+  try { navigator.clipboard.writeText(a.dataset.path).then(() => { a.classList.add('copied'); setTimeout(() => a.classList.remove('copied'), 1500); }); } catch (e) {}
+}));
+</script>
+{% endblock %}
