@@ -139,7 +139,8 @@ def tower(anim, t):
     belts = ''.join(f'M{CX - hw},{y0}H{CX + hw}' for y0, y1, hw in TIERS)
     out.append(f'<path d="M{CX},84V292" class="sm" stroke-width=".8" opacity=".35"/>'
                f'<path d="{belts}" class="sc" stroke-width=".7" opacity=".4" fill="none"/>')
-    out.append(f'<g class="sc" stroke-width="1.5" filter="url(#glow)" opacity=".9">{"".join(edge)}</g>')
+    out.append(f'<g class="sc" stroke-width="5" opacity=".2">{"".join(edge)}</g>'
+               f'<g class="sc" stroke-width="1.5" opacity=".95">{"".join(edge)}</g>')
     out.append(''.join(over))
     # окна
     wins = []
@@ -173,7 +174,8 @@ def gate(anim):
         scan = (smil('y', [(0, 292), (.55, 338), (1, 338)], SLOT, ease='io') +
                 smil('opacity', [(0, 0), (.04, .95), (.5, .95), (.56, 0), (1, 0)], SLOT, ease='lin'))
     return (f'<path d="M{CX - 20},345V312A20,20 0 0 1 {CX + 20},312V345Z" fill="url(#gPortal)"/>'
-            f'<path d="M{CX - 28},345V312A28,28 0 0 1 {CX + 28},312V345" class="nf sg" stroke-width="3" filter="url(#glow)"/>'
+            f'<path d="M{CX - 28},345V312A28,28 0 0 1 {CX + 28},312V345" class="nf sg" stroke-width="3"/>'
+            f'<path d="M{CX - 28},345V312A28,28 0 0 1 {CX + 28},312V345" class="nf sg" stroke-width="9" opacity=".22"/>'
             f'<path d="M{CX - 36},345V310A36,36 0 0 1 {CX + 36},310V345" class="nf sc" stroke-width="1" opacity=".55"/>'
             f'<rect x="{CX - 20}" y="292" width="40" height="2.2" class="fc" opacity="0">{scan}</rect>')
 
@@ -574,7 +576,7 @@ def title_block(anim, t):
     return (f'<g>'
             f'{runes}'
             + text(146, 41, TEXTS['caption'], 13, 'fc', 'start', cw=.62, extra='opacity=".85"') +
-            f'<g filter="url(#glowL)" opacity=".5"><use href="#ttl" class="fg"/></g>'
+            f'<use href="#ttl" class="fg sg" stroke-width="9" opacity=".2"/>'
             f'{ch}<g>{flick}<use href="#ttl" class="fg"/></g>'
             f'<rect x="{n(cur_x)}" y="74" width="20" height="48" class="fc" opacity="1" filter="url(#glowS)">{cursor}</rect>'
             + text(50, 156, TEXTS['slogan'], 19, 'fc', 'start', cw=.6) +

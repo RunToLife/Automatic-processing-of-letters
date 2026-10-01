@@ -77,7 +77,7 @@ def nearest_peak(pts, x):
 
 
 # ---------------------------------------------------------------- маяк -----
-def beacon(x, y, anim, start_u, D, lit=None, scale=1.0, uid=''):
+def beacon(x, y, anim, start_u, D, lit=None, scale=1.0, uid='', shaft=True):
     """маяк Гондора: вспыхивает на start_u (доля цикла D), гаснет медленно."""
     a = start_u
     keys = [(0, .16), (a, .16), (min(a + .02, .97), 1), (min(a + .30, .98), .85), (min(a + .5, .99), .16), (1, .16)]
@@ -97,7 +97,7 @@ def beacon(x, y, anim, start_u, D, lit=None, scale=1.0, uid=''):
 <path d="M-7,0L-5,-4H5L7,0Z" class="fu" stroke-width="1" style="stroke:var(--gold)" fill-opacity=".9"/>
 <g{op}>{anim_g}
 <circle cy="-12" r="19" fill="url(#gBeacon)"/>
-<rect x="-1.2" y="-84" width="2.4" height="76" fill="url(#gShaft)"/>
+{'<rect x="-1.2" y="-84" width="2.4" height="76" fill="url(#gShaft)"/>' if shaft else ''}
 <g transform="translate(0,-4)"><g>{flick}
 <path d="M0,0C-6,-5 -3,-12 0,-19C3,-12 6,-5 0,0Z" class="fg" filter="url(#glowS)"/>
 <path d="M0,-1C-2.5,-4 -1.2,-8 0,-11C1.2,-8 2.5,-4 0,-1Z" fill="#fff" opacity=".75"/></g></g>
