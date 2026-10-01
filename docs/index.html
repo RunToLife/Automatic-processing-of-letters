@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Гендальф — письма из сканов в Word</title>
+<meta name="description" content="Гендальф: Django-сервис, который превращает PDF-сканы писем в редактируемые Word-документы (OCR Tesseract, rus+eng) и ведёт реестр «СКАНЫ».">
+<style>
+:root{--bg:#05060f;--gold:#ffb800;--cyan:#00f0ff;--magenta:#ff2bd6;--red:#ff1a1a;--muted:#1a2140;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono","DejaVu Sans Mono",monospace}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:#cfd6ff;font:16px/1.6 var(--mono);overflow-x:hidden}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+.fx{position:fixed;inset:0;pointer-events:none;z-index:2;
+  background:repeating-linear-gradient(to bottom,rgba(0,0,0,.18) 0 1px,transparent 1px 3px),
+  radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(5,6,15,.8) 100%)}
+main{position:relative;z-index:1}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-start;padding:7vh 6vw 0}
+.cap{color:var(--cyan);opacity:.85;letter-spacing:.08em;font-size:14px}
+h1{position:relative;margin:.1em 0 0;font-size:clamp(44px,9.5vw,128px);line-height:1;letter-spacing:.04em;color:var(--gold);
+  text-shadow:0 0 18px rgba(255,184,0,.55),0 0 2px #fff3;font-weight:800}
+h1::before,h1::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;overflow:hidden;opacity:0;mix-blend-mode:screen}
+h1::before{color:var(--cyan);animation:gl1 7s infinite steps(1)}
+h1::after{color:var(--magenta);animation:gl2 7s infinite steps(1)}
+@keyframes gl1{0%,92%{opacity:0}92.5%{opacity:.9;transform:translate(-6px,0);clip-path:inset(10% 0 55% 0)}94%{opacity:.9;transform:translate(5px,0);clip-path:inset(60% 0 8% 0)}95.5%,100%{opacity:0}}
+@keyframes gl2{0%,92.8%{opacity:0}93.2%{opacity:.9;transform:translate(6px,0);clip-path:inset(40% 0 30% 0)}95%{opacity:.9;transform:translate(-5px,0);clip-path:inset(5% 0 70% 0)}96.5%,100%{opacity:0}}
+.slogan{font-size:clamp(16px,2.2vw,26px);color:var(--cyan);margin:.4em 0 .2em;text-shadow:0 0 10px rgba(0,240,255,.4)}
+.detail{color:var(--magenta);font-size:14px}
+.hint{margin-top:auto;padding-bottom:5vh;font-size:13px;color:#8d96c9}
+.hint b{color:var(--gold)}
+.counter{position:fixed;right:18px;top:16px;z-index:3;display:flex;gap:10px;font-size:12px}
+.counter span{border:1px solid;border-radius:14px;padding:3px 10px;background:rgba(26,33,64,.7)}
+.c0{color:var(--cyan);border-color:var(--cyan)}.c1{color:var(--magenta);border-color:var(--magenta)}.c2{color:var(--gold);border-color:var(--gold)}
+section{padding:12vh 6vw;max-width:1100px;margin:0 auto}
+section .panel{background:rgba(5,6,15,.72);border:1px solid rgba(0,240,255,.25);border-radius:6px;padding:28px 30px;backdrop-filter:blur(3px)}
+h2{margin:0 0 .6em;color:var(--gold);font-size:clamp(22px,3vw,34px);letter-spacing:.05em}
+h2 i{color:var(--magenta);font-style:normal;margin-right:.4em}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px}
+.step{border:1px solid;border-radius:6px;padding:16px;background:rgba(26,33,64,.55)}
+.step b{display:block;margin-bottom:6px}
+.s0{border-color:var(--cyan)}.s0 b{color:var(--cyan)}.s1{border-color:var(--magenta)}.s1 b{color:var(--magenta)}.s2{border-color:var(--gold)}.s2 b{color:var(--gold)}
+ul{padding-left:1.2em}li{margin:.3em 0}
+code{color:var(--cyan)}
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pills span{border:1.5px solid;border-radius:16px;padding:4px 14px;font-size:13px;background:rgba(26,33,64,.7)}
+a{color:var(--cyan)}
+footer{position:relative;z-index:1;text-align:center;padding:8vh 6vw 6vh;color:#8d96c9;font-size:13px}
+footer b{color:var(--gold)}
+@media (prefers-reduced-motion:reduce){h1::before,h1::after{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div class="fx" aria-hidden="true"></div>
+<div class="counter" aria-live="off"><span class="c0">ТЕКСТ-СЛОЙ <b id="n0">0</b></span><span class="c1">СКАН · OCR <b id="n1">0</b></span><span class="c2">ТАБЛИЦА <b id="n2">0</b></span></div>
+
+<main>
+  <div class="hero">
+    <div class="cap">ᛟ // входящие → порядок</div>
+    <h1 data-t="ГЕНДАЛЬФ">ГЕНДАЛЬФ</h1>
+    <div class="slogan">Письма из сканов — в Word. Автоматически.</div>
+    <div class="detail">PDF · OCR rus+eng · таблицы · реестр «СКАНЫ»</div>
+    <div class="hint">Ведите курсором: <b>Око-палантир</b> притягивает письма, сканирует их и раскладывает по каналам справа. Прокрутите вниз — параллакс.</div>
+  </div>
+
+  <section id="about"><div class="panel">
+    <h2><i>ᚠ</i>О проекте</h2>
+    <p><b>Гендальф</b> — веб-приложение на <b>Django</b> для локальной сети. Пользователь загружает скан письма (PDF), система превращает его
+    в Word-документ: текстовые PDF разбираются напрямую (PyMuPDF), сканы распознаются OCR Tesseract (русский + английский).
+    Скан и документ показываются рядом, документ можно править и сохранить как <code>.docx</code>. Все сохранения попадают в общий реестр «СКАНЫ» с фильтрами и поиском.</p>
+    <div class="steps">
+      <div class="step s0"><b>1 · ТЕКСТ-СЛОЙ</b>PyMuPDF извлекает абзацы, жирный/курсив, размеры шрифтов (→ заголовки), выравнивание, картинки.</div>
+      <div class="step s1"><b>2 · СКАН · OCR</b>Рендер 300 dpi → оттенки серого + автоконтраст → Tesseract (<code>rus+eng</code>) → абзацы и заголовки.</div>
+      <div class="step s2"><b>3 · ТАБЛИЦА</b>Линии сетки находятся на скане, слова раскладываются по ячейкам; объединённые ячейки (colspan/rowspan) сохраняются.</div>
+    </div>
+  </div></section>
+
+  <section id="features"><div class="panel">
+    <h2><i>ᚱ</i>Возможности</h2>
+    <ul>
+      <li>Авторизация, администратор добавляет пользователей.</li>
+      <li>Слева PDF-скан, справа редактируемый Word-документ (жирный/курсив/подчёркивание, выравнивание, списки, заголовки).</li>
+      <li>Кнопка «Сохранить WORD файл» — файл записывается на компьютере пользователя, запись попадает в «СКАНЫ».</li>
+      <li>«СКАНЫ»: таблица с фильтром по каждому столбцу и поиском слова по всем столбцам сразу.</li>
+    </ul>
+  </div></section>
+
+  <section id="stack"><div class="panel">
+    <h2><i>ᛞ</i>Стек</h2>
+    <div class="pills">
+      <span style="color:var(--cyan)">Python 3.11 / 3.12</span><span style="color:var(--gold)">Django 5.1</span><span style="color:var(--magenta)">PyMuPDF</span>
+      <span style="color:var(--cyan)">Tesseract OCR</span><span style="color:var(--gold)">python-docx</span><span style="color:var(--magenta)">Pillow</span>
+      <span style="color:var(--cyan)">NumPy</span><span style="color:var(--gold)">SQLite</span><span style="color:var(--magenta)">Waitress</span><span style="color:var(--cyan)">WhiteNoise</span>
+    </div>
+  </div></section>
+</main>
+<footer><b>Гендальф</b> · скан → OCR → Word · <a href="../README.md">README</a></footer>
+
+<script>
+(() => {
+'use strict';
+const cv = document.getElementById('scene'), ctx = cv.getContext('2d');
+if (!CanvasRenderingContext2D.prototype.roundRect) CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C = {bg:'#05060f', gold:'#ffb800', cyan:'#00f0ff', mag:'#ff2bd6', red:'#ff1a1a', mut:'#1a2140'};
+const KC = [C.cyan, C.mag, C.gold], KN = ['ТЕКСТ-СЛОЙ', 'OCR rus+eng', 'ТАБЛИЦА'];
+let W = 0, H = 0, DPR = 1, scrollY = 0;
+const mouse = {x: -999, y: -999, t: 0, on: false};
+const counts = [0, 0, 0];
+const rnd = (a, b) => a + Math.random() * (b - a);
+const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  buildStatic();
+}
+addEventListener('resize', resize);
+addEventListener('scroll', () => { scrollY = window.scrollY; }, {passive: true});
+addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.t = performance.now(); mouse.on = true; }, {passive: true});
+
+/* ---- руны (вымышленные): спрайты ---- */
+const runes = [];
+function makeRunes() {
+  const parts = [[5,0,10,4,5,8],[5,3,10,7],[5,8,0,4],[5,16,10,11],[5,6,0,10],[0,0,5,5],[5,4,10,0],[5,12,0,16]];
+  for (let i = 0; i < 12; i++) {
+    const c = document.createElement('canvas'); c.width = 20; c.height = 28;
+    const g = c.getContext('2d'); g.translate(5, 6); g.strokeStyle = '#fff'; g.lineWidth = 1.4; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(5, 0); g.lineTo(5, 16);
+    for (let k = 0; k < 2 + (i % 2); k++) { const p = parts[(i * 3 + k * 5) % parts.length]; g.moveTo(p[0], p[1]); for (let q = 2; q < p.length; q += 2) g.lineTo(p[q], p[q+1]); }
+    g.stroke(); runes.push(c);
+  }
+}
+makeRunes();
+const rain = Array.from({length: 26}, () => ({x: Math.random(), y: Math.random(), v: rnd(.05, .14), n: 4 + (Math.random()*5|0), r: Math.random()*12|0, m: Math.random() < .25}));
+
+/* ---- статика: горы ---- */
+let mountains = [];
+function ridge(base, amp, step, seed) {
+  const pts = []; let s = seed;
+  const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let x = -40; x <= W + 40; x += step) {
+    const h = Math.sin(x * .004 + seed) * .5 + Math.sin(x * .011 + seed * 2) * .3 + (r() - .5) * .5;
+    pts.push([x, base - (h + .8) * amp]);
+  }
+  return pts;
+}
+function buildStatic() {
+  mountains = [ridge(H * .74, H * .16, 26, 7), ridge(H * .82, H * .1, 22, 3)];
+}
+
+/* ---- геометрия сцены ---- */
+const G = () => ({x: W * .5, y: H * .74});
+const stackPos = k => ({x: W * .88, y: H * (.56 + k * .14)});
+const chan = (k, t) => { // кривая от врат к стопке
+  const g = G(), s = stackPos(k);
+  const x = g.x + (s.x - g.x) * t;
+  const sw = ease(Math.min(1, Math.max(0, (t - .15) / .6)));
+  return {x, y: g.y + (s.y - g.y) * sw};
+};
+
+/* ---- письма ---- */
+const letters = [];
+const MAXL = 56;
+function spawn(initial) {
+  letters.push({x: initial ? rnd(0, W * .45) : -30, y: rnd(H * .3, H * .95), vx: rnd(12, 40), vy: rnd(-14, 14),
+    rot: rnd(-3, 3), vr: rnd(-1.4, 1.4), s: rnd(.9, 1.5), kind: [1, 0, 1, 2][Math.random() * 4 | 0],
+    st: 0, t: 0, a: 1, ph: rnd(0, 6.28)});
+}
+for (let i = 0; i < 30; i++) spawn(true);
+
+function eyePos(now) {
+  if (mouse.on && now - mouse.t < 3500) return {x: mouse.x, y: mouse.y};
+  const t = now / 1000;
+  return {x: W * .24 + Math.sin(t * .6) * W * .16, y: H * .58 + Math.sin(t * .9 + 1) * H * .16};
+}
+
+function step(dt, now) {
+  const e = eyePos(now);
+  if (letters.length < MAXL && Math.random() < dt * 3.2) spawn(false);
+  let busy = letters.some(l => l.st === 1);
+  for (let i = letters.length - 1; i >= 0; i--) {
+    const L = letters[i];
+    if (L.st === 0) { // хаос: дрейф, шум, притяжение к Оку
+      L.ph += dt;
+      const dx = e.x - L.x, dy = e.y - L.y, d = Math.hypot(dx, dy);
+      let ax = Math.sin(L.ph * 1.7 + L.y * .01) * 18, ay = Math.cos(L.ph * 1.3 + L.x * .01) * 18;
+      if (d < 300) { const f = (1 - d / 300) * 420; ax += dx / (d + 1) * f; ay += dy / (d + 1) * f; }
+      if (L.x > W * .55) ax -= (L.x - W * .55) * 1.4; // справа от врат хаоса нет
+      if (d > 300 && L.y < H * .42) ay += (H * .42 - L.y) * 1.2; // не залезаем под заголовок
+      L.vx += ax * dt; L.vy += ay * dt;
+      const sp = Math.hypot(L.vx, L.vy), mx = d < 300 ? 320 : 70; if (sp > mx) { L.vx *= mx / sp; L.vy *= mx / sp; }
+      L.x += L.vx * dt; L.y += L.vy * dt; L.rot += L.vr * dt;
+      if (L.y < 40 || L.y > H - 20) L.vy *= -.8;
+      if (d < 34 && !busy) { L.st = 1; L.t = 0; busy = true; } // одно письмо под Оком за раз
+    } else if (L.st === 1) { // сканирование: висит под Оком, разворачивается в голограмму
+      L.t += dt;
+      L.x += (e.x - L.x) * Math.min(1, dt * 8); L.y += (e.y - L.y) * Math.min(1, dt * 8);
+      L.rot *= (1 - Math.min(1, dt * 6));
+      if (L.t > 1.1) { L.st = 2; L.t = 0; L.x0 = L.x; L.y0 = L.y; }
+    } else if (L.st === 2) { // раскладка по каналу
+      L.t += dt / 1.6;
+      const p = ease(Math.min(1, L.t)), g = G(), c = chan(L.kind, p);
+      const k1 = Math.min(1, p * 2.2);
+      L.x = L.x0 + (g.x - L.x0) * ease(k1) * (1 - p) + c.x * p;
+      L.y = L.y0 + (g.y - L.y0) * ease(k1) * (1 - p) + c.y * p;
+      if (L.t >= 1) { counts[L.kind]++; document.getElementById('n' + L.kind).textContent = counts[L.kind]; L.st = 3; L.t = 0; }
+    } else { L.t += dt / .5; L.a = 1 - L.t; if (L.t >= 1) letters.splice(i, 1); }
+  }
+}
+
+/* ---- рисование ---- */
+function env(x, y, rot, s, col, a) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s); ctx.globalAlpha = a;
+  ctx.lineWidth = 1.5 / s; ctx.strokeStyle = col; ctx.fillStyle = C.mut;
+  ctx.beginPath(); ctx.roundRect(-12, -8.5, 24, 17, 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-12, -8.5); ctx.lineTo(0, 1.5); ctx.lineTo(12, -8.5); ctx.stroke(); ctx.restore();
+}
+function doc(x, y, s, col, a) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = a; ctx.lineWidth = 1.5 / s; ctx.strokeStyle = col; ctx.fillStyle = C.mut;
+  ctx.beginPath(); ctx.moveTo(-10, -13); ctx.lineTo(4, -13); ctx.lineTo(10, -7); ctx.lineTo(10, 13); ctx.lineTo(-10, 13); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(4, -13); ctx.lineTo(4, -7); ctx.lineTo(10, -7); ctx.moveTo(-6, -1); ctx.lineTo(6, -1); ctx.moveTo(-6, 4); ctx.lineTo(6, 4); ctx.moveTo(-6, 9); ctx.lineTo(1, 9); ctx.stroke(); ctx.restore();
+}
+function holo(L, now) {
+  const p = Math.min(1, L.t / .45), k = ease(p), col = KC[L.kind];
+  ctx.save(); ctx.translate(L.x, L.y - 70 * k); ctx.scale(.3 + .7 * k, .3 + .7 * k); ctx.globalAlpha = Math.min(1, p * 2);
+  ctx.shadowColor = col; ctx.shadowBlur = 12;
+  ctx.fillStyle = 'rgba(5,6,15,.88)'; ctx.strokeStyle = col; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.roundRect(-70, -44, 140, 88, 5); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.font = '700 10px ui-monospace,Menlo,Consolas,monospace'; ctx.fillStyle = col; ctx.fillText(KN[L.kind], -62, -30);
+  ctx.globalAlpha *= .6; ctx.beginPath(); ctx.moveTo(-70, -22); ctx.lineTo(70, -22); ctx.stroke(); ctx.globalAlpha = Math.min(1, p * 2);
+  const rows = L.kind === 2 ? 0 : 5;
+  for (let r = 0; r < rows; r++) {
+    const w = Math.max(0, Math.min(1, (L.t - .15 - r * .08) / .25)) * (60 + ((r * 37 + L.kind * 11) % 40));
+    ctx.fillStyle = r % 2 ? C.gold : C.cyan; ctx.globalAlpha = .85; ctx.fillRect(-62, -14 + r * 11, w, 4);
+  }
+  if (L.kind === 2) {
+    ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.globalAlpha = .9;
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      if ((r === 1 && c === 2) || (r === 2 && c === 2)) continue;
+      const on = L.t > .15 + (r * 4 + c) * .035; if (!on) continue;
+      ctx.strokeRect(-62 + c * 31, -16 + r * 14, (r === 1 && c === 1) ? 59 : 28, 12);
+    }
+  }
+  const sy = -22 + Math.min(1, Math.max(0, (L.t - .1) / .8)) * 60;
+  ctx.globalAlpha = L.t < .95 ? .8 : 0; ctx.fillStyle = C.cyan; ctx.fillRect(-68, sy, 136, 2);
+  if (L.t > .8) { ctx.globalAlpha = 1; ctx.fillStyle = C.gold; ctx.fillText('→ DOCX ✓', -62, 38); }
+  ctx.restore();
+}
+function drawTower(oy) {
+  const cx = W * .5, base = H * .78 + oy, u = H / 720;
+  const tiers = [[40, 150], [38, 118], [36, 90], [32, 66], [28, 46]];
+  let y = base;
+  ctx.lineWidth = 1.4; ctx.strokeStyle = C.cyan; ctx.shadowColor = C.cyan; ctx.shadowBlur = 8;
+  tiers.forEach(([h, hw], i) => {
+    const hh = h * u * 1.2, w = hw * u * 1.2;
+    const g = ctx.createLinearGradient(0, y - hh, 0, y); g.addColorStop(0, C.mut); g.addColorStop(1, C.bg);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx - w, y); ctx.lineTo(cx - w + 5, y - hh); ctx.lineTo(cx + w - 5, y - hh); ctx.lineTo(cx + w, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur = 0; ctx.fillStyle = C.gold;
+    for (let c = -2; c <= 2; c++) if ((c * 7 + i * 3 + Math.floor(performance.now() / 900 + c * i)) % 5 !== 0) ctx.fillRect(cx + c * w * .36 - 2, y - hh * .7, 4, 6);
+    ctx.shadowBlur = 8; y -= hh;
+  });
+  ctx.beginPath(); ctx.moveTo(cx - 12 * u, y); ctx.lineTo(cx, y - 52 * u); ctx.lineTo(cx + 12 * u, y); ctx.closePath(); ctx.stroke();
+  ctx.shadowBlur = 0;
+  return {x: cx, y: y - 52 * u - 26 * u};
+}
+function drawEye(x, y, now, size, track) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(size, size);
+  ctx.strokeStyle = C.gold; ctx.globalAlpha = .5; ctx.lineWidth = 1;
+  const a0 = now / 4000;
+  for (let i = 0; i < 14; i++) { const a = a0 + i / 14 * 6.283, r0 = 44, r1 = i % 2 ? 62 : 52; ctx.beginPath(); ctx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0 * .8); ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1 * .8); ctx.stroke(); }
+  ctx.globalAlpha = 1; ctx.shadowColor = C.red; ctx.shadowBlur = 16; ctx.strokeStyle = C.red; ctx.lineWidth = 2.2; ctx.fillStyle = '#1a0000';
+  const blink = (now % 7000) > 6850 ? .12 : 1;
+  ctx.beginPath(); ctx.moveTo(-36, 0); ctx.quadraticCurveTo(0, -30 * blink, 36, 0); ctx.quadraticCurveTo(0, 30 * blink, -36, 0); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 15); g.addColorStop(0, C.gold); g.addColorStop(.55, C.red); g.addColorStop(1, 'rgba(255,26,26,.2)');
+  ctx.save(); ctx.scale(1, blink); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 15, 0, 6.283); ctx.fill();
+  ctx.fillStyle = C.bg; ctx.beginPath(); ctx.ellipse(track || 0, 0, 3.4, 12 + Math.sin(now / 400) * 2, 0, 0, 6.283); ctx.fill(); ctx.restore();
+  ctx.restore();
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (!reduce) step(dt, now);
+  const sy = Math.min(scrollY, H * 1.6);
+  ctx.clearRect(0, 0, W, H);
+  // небо
+  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, C.bg); sky.addColorStop(.7, '#10162f'); sky.addColorStop(1, C.bg);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  const hz = ctx.createRadialGradient(W * .5, H * .78, 0, W * .5, H * .78, W * .55); hz.addColorStop(0, 'rgba(255,43,214,.32)'); hz.addColorStop(1, 'rgba(255,43,214,0)');
+  ctx.fillStyle = hz; ctx.fillRect(0, H * .4, W, H * .6);
+  // горы (параллакс: скролл + курсор)
+  const mx = mouse.on ? (mouse.x / W - .5) : 0;
+  mountains.forEach((pts, li) => {
+    const oy = -sy * (.12 + li * .12), ox = -mx * (10 + li * 16), col = li ? C.cyan : C.mag;
+    ctx.save(); ctx.translate(ox, oy);
+    ctx.beginPath(); ctx.moveTo(pts[0][0], H + 200); pts.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(pts[pts.length-1][0], H + 200); ctx.closePath();
+    const g = ctx.createLinearGradient(0, H * .5, 0, H); g.addColorStop(0, 'rgba(26,33,64,.85)'); g.addColorStop(1, C.bg); ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = col; ctx.globalAlpha = .75; ctx.lineWidth = 1; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+    ctx.globalAlpha = .22; ctx.beginPath(); pts.forEach((p, i) => { if (i % 2 === 0) { ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0] + (i % 4 ? -26 : 26), H * .9); } }); ctx.stroke();
+    if (li === 0) { // маяки цепочкой
+      [.12, .3, .72, .88].forEach((fx, bi) => {
+        const p = pts[Math.round(fx * (pts.length - 1))], ph = ((now / 1000 - bi * .6) % 8 + 8) % 8, lit = ph < 3.5 ? 1 : .2;
+        const gr = ctx.createRadialGradient(p[0], p[1] - 10, 0, p[0], p[1] - 10, 26); gr.addColorStop(0, `rgba(255,184,0,${.7 * lit})`); gr.addColorStop(1, 'rgba(255,184,0,0)');
+        ctx.globalAlpha = 1; ctx.fillStyle = gr; ctx.fillRect(p[0] - 26, p[1] - 36, 52, 52);
+        ctx.fillStyle = C.gold; ctx.globalAlpha = lit; ctx.beginPath(); ctx.moveTo(p[0], p[1] - 3); ctx.quadraticCurveTo(p[0] - 5, p[1] - 12, p[0], p[1] - 20 - Math.sin(now / 130 + bi) * 2); ctx.quadraticCurveTo(p[0] + 5, p[1] - 12, p[0], p[1] - 3); ctx.fill();
+      });
+    }
+    ctx.restore();
+  });
+  // дождь рун
+  rain.forEach(r => {
+    r.y += (reduce ? 0 : r.v * dt); if (r.y > 1.2) { r.y = -.2; r.x = Math.random(); }
+    for (let i = 0; i < r.n; i++) {
+      ctx.globalAlpha = (.12 + .6 * (i / r.n) ** 2) * .7; ctx.save(); ctx.translate(r.x * W, r.y * H - i * 17);
+      ctx.drawImage(runes[(r.r + i) % runes.length], 0, 0); ctx.restore();
+    }
+  });
+  ctx.globalAlpha = 1;
+  // башня + Око + земля
+  const oy = -sy * .08;
+  ctx.fillStyle = 'rgba(255,43,214,.07)'; ctx.fillRect(0, H * .78 + oy, W, H);
+  ctx.strokeStyle = C.mag; ctx.globalAlpha = .7; ctx.beginPath(); ctx.moveTo(0, H * .78 + oy); ctx.lineTo(W, H * .78 + oy); ctx.stroke(); ctx.globalAlpha = 1;
+  const top = drawTower(oy);
+  const e = eyePos(now), g = G();
+  // луч Ока к курсору
+  const grad = ctx.createLinearGradient(top.x, top.y, e.x, e.y); grad.addColorStop(0, 'rgba(255,26,26,.5)'); grad.addColorStop(1, 'rgba(255,184,0,.0)');
+  ctx.strokeStyle = grad; ctx.lineWidth = 3; ctx.globalAlpha = .6; ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(e.x, e.y); ctx.stroke(); ctx.globalAlpha = 1;
+  drawEye(top.x, top.y, now, Math.max(.7, H / 900), Math.max(-7, Math.min(7, (e.x - top.x) / W * 24)));
+  // врата
+  ctx.strokeStyle = C.gold; ctx.lineWidth = 2.5; ctx.shadowColor = C.gold; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(g.x - 24, g.y + 24); ctx.lineTo(g.x - 24, g.y - 4); ctx.arc(g.x, g.y - 4, 24, Math.PI, 0); ctx.lineTo(g.x + 24, g.y + 24); ctx.stroke(); ctx.shadowBlur = 0;
+  // каналы и стопки
+  for (let k = 0; k < 3; k++) {
+    const s = stackPos(k); ctx.strokeStyle = KC[k]; ctx.lineWidth = 1.6; ctx.globalAlpha = .7; ctx.beginPath();
+    for (let i = 0; i <= 40; i++) { const c = chan(k, i / 40); i ? ctx.lineTo(c.x, c.y) : ctx.moveTo(c.x, c.y); } ctx.stroke();
+    ctx.setLineDash([2, 12]); ctx.lineDashOffset = -now / 60; ctx.lineWidth = 3; ctx.globalAlpha = .95; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const n = Math.min(counts[k], 14);
+    for (let i = 0; i < Math.max(2, n); i++) { ctx.fillStyle = C.mut; ctx.strokeStyle = KC[k]; ctx.globalAlpha = .45 + i * .04; ctx.lineWidth = 1; ctx.fillRect(s.x - 24, s.y + 8 - i * 3.4, 48, 11); ctx.strokeRect(s.x - 24, s.y + 8 - i * 3.4, 48, 11); }
+    ctx.globalAlpha = 1; ctx.fillStyle = KC[k]; ctx.font = '700 11px ui-monospace,Menlo,Consolas,monospace'; ctx.fillText(KN[k], s.x - 24, s.y + 28);
+  }
+  // письма
+  letters.forEach(L => {
+    if (L.st === 0) env(L.x, L.y, L.rot, L.s, KC[L.kind], .85);
+    else if (L.st === 1) { env(L.x, L.y, 0, 1.4 * (1 - Math.min(1, L.t / .4)) + .01, KC[L.kind], .9); }
+    else if (L.st === 2) doc(L.x, L.y, .9 + .3 * L.t, KC[L.kind], 1);
+    else doc(L.x, L.y, 1.2, KC[L.kind], Math.max(0, L.a));
+  });
+  letters.forEach(L => { if (L.st === 1) holo(L, now); });
+  // курсор-Око
+  if (mouse.on && now - mouse.t < 3500) {
+    ctx.strokeStyle = C.red; ctx.shadowColor = C.red; ctx.shadowBlur = 10; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 26 + Math.sin(now / 250) * 2, 0, 6.283); ctx.stroke(); ctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(frame);
+}
+resize();
+if (reduce) { for (let i = 0; i < 20; i++) step(.05, i * 50); }
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
