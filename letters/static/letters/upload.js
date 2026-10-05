@@ -3,7 +3,7 @@
   const $ = id => document.getElementById(id);
   const input = $('pdfInput'), editor = $('editor'), frame = $('pdfFrame');
   const saveBtn = $('saveBtn'), dlg = $('saveDlg'), status = $('status');
-  let pdfUrl = null, baseName = '', dirHandle = null;
+  let pdfUrl = null, baseName = '', dirHandle = null, pageMeta = null;
 
   const csrf = () => (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
   const store = {
@@ -21,7 +21,7 @@
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     pdfUrl = URL.createObjectURL(file);
     frame.src = pdfUrl; frame.style.display = 'block'; $('pdfPh').hidden = true;
-    editor.style.display = 'none'; $('docPh').hidden = true; $('docPh').textContent = 'Здесь появится WORD-документ после обработки'; saveBtn.disabled = true;
+    editor.style.display = 'none'; $('docPh').hidden = true; pageMeta = null; $('docPh').textContent = 'Здесь появится WORD-документ после обработки'; saveBtn.disabled = true;
     $('busy').hidden = false; status.textContent = '';
     const fd = new FormData(); fd.append('pdf', file);
     try {
@@ -29,6 +29,8 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Ошибка обработки');
       editor.innerHTML = data.html || '<p></p>';
+      pageMeta = data.page || null;
+      layoutEditor();
       editor.style.display = 'block'; $('docPh').hidden = true;
       saveBtn.disabled = false;
       let msg = 'Страниц: ' + data.pages + (data.ocr_pages ? ' (распознано OCR: ' + data.ocr_pages + ')' : '');
@@ -38,6 +40,20 @@
       $('docPh').hidden = false; $('docPh').textContent = 'Ошибка: ' + e.message;
     } finally { $('busy').hidden = true; }
   }
+  // Редактор повторяет страницу оригинала: ширина и поля в pt, масштаб подгоняется под панель
+  function layoutEditor() {
+    if (!pageMeta) { editor.removeAttribute('style'); editor.style.display = 'block'; return; }
+    const m = pageMeta;
+    editor.style.display = 'block';
+    editor.style.maxWidth = 'none';
+    editor.style.width = m.w + 'pt';
+    editor.style.padding = m.mt + 'pt ' + m.mr + 'pt ' + Math.max(m.mb, 28) + 'pt ' + m.ml + 'pt';
+    const pane = editor.parentElement;
+    const fit = (pane.clientWidth - 32) / (m.w * 96 / 72);
+    editor.style.zoom = fit < 1 ? fit.toFixed(3) : '';
+    editor.style.margin = '16px auto';
+  }
+  window.addEventListener('resize', () => { if (pageMeta && editor.style.display === 'block') layoutEditor(); });
   input.addEventListener('change', () => { handleFile(input.files[0]); input.value = ''; });
   ['dragenter', 'dragover'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); document.body.classList.add('drag'); }));
   ['dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); document.body.classList.remove('drag'); }));
@@ -100,6 +116,7 @@
       // 2) сервер собирает WORD из текущего содержимого редактора
       const fd = new FormData();
       fd.append('html', editor.innerHTML); fd.append('filename', name);
+      if (pageMeta) fd.append('page', JSON.stringify(pageMeta));
       const r = await fetch(C.docxUrl, {method: 'POST', body: fd, headers: {'X-CSRFToken': csrf()}});
       if (!r.ok) throw new Error('Не удалось собрать WORD-файл.');
       const blob = await r.blob();

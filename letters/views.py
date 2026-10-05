@@ -10,7 +10,8 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
-from .converter import ConversionError, convert_pdf, html_to_docx
+from .converter import ConversionError, convert_pdf
+from .docxbuild import html_to_docx
 from .models import ScanRecord
 
 BAD_NAME = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
@@ -38,7 +39,7 @@ def convert(request):
     except ConversionError as e:
         return JsonResponse({'error': str(e)}, status=422)
     return JsonResponse({'html': res.html, 'pages': res.pages, 'ocr_pages': res.ocr_pages,
-                         'warnings': res.warnings})
+                         'warnings': res.warnings, 'page': res.meta})
 
 
 def _clean_name(name):
@@ -48,13 +49,27 @@ def _clean_name(name):
     return name or 'Письмо'
 
 
+def _page_meta(raw):
+    """Размер страницы и поля оригинала (pt) из запроса; всё, что не похоже на число, отбрасываем."""
+    try:
+        m = json.loads(raw or '{}')
+        meta = {k: float(m[k]) for k in ('w', 'h', 'ml', 'mr', 'mt', 'mb')}
+    except (ValueError, KeyError, TypeError):
+        return None
+    if not (100 <= meta['w'] <= 3000 and 100 <= meta['h'] <= 3000):
+        return None
+    for k in ('ml', 'mr', 'mt', 'mb'):
+        meta[k] = min(max(meta[k], 0.0), 400.0)
+    return meta
+
+
 @login_required
 @require_POST
 def build_docx(request):
     """Собирает WORD из отредактированного текста; браузер сам записывает файл на машину пользователя."""
     html = request.POST.get('html', '')
     name = _clean_name(request.POST.get('filename'))
-    data = html_to_docx(html)
+    data = html_to_docx(html, _page_meta(request.POST.get('page')))
     resp = HttpResponse(data, content_type=DOCX_MIME)
     resp['Content-Disposition'] = f"attachment; filename*=UTF-8''{quote(name)}.docx"
     return resp
