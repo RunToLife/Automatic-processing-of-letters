@@ -17,6 +17,13 @@ if errorlevel 1 (
         echo WARNING: Tesseract OCR not found. Install it - see README.md - otherwise scans cannot be recognized.
     )
 )
+where gswin64c >nul 2>nul
+if errorlevel 1 (
+    if not exist "C:\Program Files\gs" (
+        echo.
+        echo WARNING: Ghostscript not found. OCRmyPDF needs it to rotate sideways/upside-down scans - see README.md.
+    )
+)
 echo.
 echo Done. Now run run.bat
 pause

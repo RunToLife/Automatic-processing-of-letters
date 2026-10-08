@@ -5,8 +5,9 @@
 без линий) и подписи. Геометрию собирают две ветки:
 
 * страницы с текстовым слоем — PyMuPDF (слова с шрифтом и размером, линии таблиц из векторной графики);
-* страницы-сканы — Tesseract OCR (rus+eng, 300 dpi), предварительно выравниваем наклон скана, находим
-  линии таблиц и стираем их перед распознаванием.
+* страницы-сканы — связка OCRmyPDF + Tesseract: OCRmyPDF (letters/ocrprep.py) разворачивает и выравнивает
+  изображение скана, затем Tesseract OCR (rus+eng, 300 dpi) распознаёт слова; находим линии таблиц и стираем
+  их перед распознаванием. Без OCRmyPDF работает встроенное выравнивание наклона.
 
 Дальше обе ветки отдают элементы страницы (letters/layout.py), которые превращаются в HTML с точной
 вёрсткой; DOCX собирается из этого HTML (letters/docxbuild.py).
@@ -23,6 +24,7 @@ from PIL import Image
 
 from . import fontmetrics as fm
 from . import layout as L
+from . import ocrprep
 
 MIN_TEXT_CHARS = 25  # меньше символов на странице -> считаем страницу сканом
 SEG_GAP = 1.5        # разрыв в строке шире 1.5 кегля — новый сегмент (колонка)
@@ -37,6 +39,7 @@ class ConversionResult:
     html: str
     pages: int
     ocr_pages: int = 0
+    ocrmypdf: bool = False   # сканы подготовлены OCRmyPDF (поворот, наклон, разрешение)
     warnings: list = field(default_factory=list)
     meta: dict = field(default_factory=dict)
 
@@ -870,6 +873,37 @@ def _ocr_page(page, pytesseract):
     return L.Page(page.rect.width, page.rect.height, elems, rules, fills)
 
 
+def _prepare_scans(data, doc, scan_nums, result):
+    """OCRmyPDF как первый шаг для страниц-сканов -> fitz.Document с выровненными сканами или None.
+
+    Режим (settings.OCRMYPDF_MODE): off — пропустить; auto — применить, если установлен, а при сбое продолжить
+    со встроенной подготовкой (с предупреждением); on — без OCRmyPDF не работаем.
+    """
+    mode = settings.OCRMYPDF_MODE
+    if not scan_nums or mode == 'off':
+        return None
+    if not ocrprep.available():
+        if mode == 'on':
+            raise ConversionError('GENDALF_OCRMYPDF=on, но пакет ocrmypdf не установлен (см. README.md).')
+        return None
+    try:
+        out = ocrprep.prepare(data, scan_nums)
+        prepared = fitz.open(stream=out, filetype='pdf')
+    except Exception as e:  # noqa: BLE001  — любой сбой подготовки (в т.ч. OcrPrepError) не должен ронять конвертацию
+        if mode == 'on':
+            raise ConversionError(f'OCRmyPDF: {e}') from e
+        result.warnings.append(f'OCRmyPDF не применён ({e}); использована встроенная подготовка скана.')
+        return None
+    if prepared.page_count != doc.page_count:
+        prepared.close()
+        if mode == 'on':
+            raise ConversionError('OCRmyPDF изменил число страниц документа.')
+        result.warnings.append('OCRmyPDF изменил число страниц; использована встроенная подготовка скана.')
+        return None
+    result.ocrmypdf = True
+    return prepared
+
+
 def convert_pdf(data: bytes) -> ConversionResult:
     """data — содержимое PDF (без временных файлов: на Windows они мешают открытию)."""
     try:
@@ -879,19 +913,23 @@ def convert_pdf(data: bytes) -> ConversionResult:
     if doc.needs_pass:
         raise ConversionError('PDF защищён паролем.')
     result = ConversionResult(html='', pages=doc.page_count)
+    scan_nums = [n for n, page in enumerate(doc, start=1) if len(page.get_text().strip()) < MIN_TEXT_CHARS]
+    prepared = _prepare_scans(data, doc, scan_nums, result)
     pages = []
     pytesseract = None
     for n, page in enumerate(doc, start=1):
-        if len(page.get_text().strip()) >= MIN_TEXT_CHARS:
+        if n not in scan_nums:
             pg = _native_page(page)
         else:
             if pytesseract is None:
                 pytesseract = _setup_tesseract()
-            pg = _ocr_page(page, pytesseract)
+            pg = _ocr_page(prepared[n - 1] if prepared else page, pytesseract)
             result.ocr_pages += 1
             if not pg.elems:
                 result.warnings.append(f'Страница {n}: текст не распознан.')
         pages.append(pg)
+    if prepared:
+        prepared.close()
     doc.close()
     meta = L.compute_meta(pages)
     # проход 1: узнаём, где реально начинается содержимое -> верхнее поле Word; проход 2: итоговый HTML

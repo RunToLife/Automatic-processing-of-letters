@@ -15,7 +15,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/stack.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/stack-light.svg">
-  <img alt="Python 3.11/3.12 · Django 5.1 · PyMuPDF · Tesseract OCR · python-docx · Pillow · NumPy · SQLite · Waitress · WhiteNoise" src="assets/stack.svg">
+  <img alt="Python 3.11/3.12 · Django 5.1 · PyMuPDF · Tesseract OCR · OCRmyPDF · python-docx · Pillow · NumPy · SQLite · Waitress · WhiteNoise" src="assets/stack.svg">
 </picture>
 
 </div>
@@ -50,7 +50,13 @@
   * с частью линий (рамка, только горизонтальные линии, линия под шапкой) — границы повторяют оригинал по каждой стороне ячейки;
   * без линий вообще (колонки выровнены пробелами) — таблица без границ; заливка шапки и «зебра» сохраняются.
 * Страницы с текстовым слоем разбирает PyMuPDF (слова, шрифты, линии и заливки из векторной графики).
-* Страницы-сканы: выравнивание наклона (до ±4°) → поиск линий таблиц (numpy) и их стирание → Tesseract (`rus+eng`, LSTM, 300 dpi).
+* Страницы-сканы — связка **OCRmyPDF + Tesseract**:
+  1. OCRmyPDF определяет ориентацию каждой страницы-скана (OSD) и разворачивает перевёрнутые и лежащие на боку листы; текстовые
+     страницы документа он не трогает (`letters/ocrprep.py`);
+  2. выравнивание наклона (до ±4°) → поиск линий таблиц (numpy) и их стирание → Tesseract (`rus+eng`, LSTM, 300 dpi) —
+     слова с точными рамками, а затем отдельный проход по ячейкам таблиц. Эти данные нужны для вёрстки, поэтому текстовый слой OCRmyPDF
+     не используется: он подготавливает страницу, а распознаёт Tesseract напрямую.
+  Если OCRmyPDF или Ghostscript не установлены либо шаг не удался, преобразование продолжается без него (в окне появится предупреждение).
   Кегль определяется по ширине строки (строки в Word получаются той же ширины, что в скане, и переносятся так же), жирность — по толщине штриха;
   мелкие ячейки таблиц (номера, количество) распознаются отдельно, поэтому «1, 2, 3» не превращаются в мусор.
 * Результат правится в окне (оно показывает страницу с теми же полями и отступами); при сохранении собирается `.docx`
@@ -66,7 +72,7 @@
 | `gendalf/`, `letters/`, `templates/` | код приложения |
 | `db.sqlite3` | готовая база SQLite: таблицы и пользователь `admin/admin` (создаётся миграцией `letters/migrations/0002_create_admin.py`) |
 | `vendor/wheels/` | **все Python-библиотеки** (Windows x64 и Linux x64, Python 3.11/3.12) — установка без интернета |
-| `tessdata/` | языковые модели OCR (`rus`, `eng`) — доустанавливать языки не нужно |
+| `tessdata/` | модели Tesseract: `rus`, `eng` и `osd` (определение ориентации страницы для OCRmyPDF) — доустанавливать не нужно |
 | `requirements.txt` | список библиотек |
 | `setup.bat` / `setup.sh` | установка; `run.bat` / `run.sh` — запуск |
 
@@ -106,7 +112,11 @@
      (путь по умолчанию `C:\Program Files\Tesseract-OCR`). Языки выбирать не обязательно — они берутся из папки
      `tessdata/` проекта. Из папки по умолчанию `C:\Program Files\Tesseract-OCR` он подхватывается автоматически; если установлен в другое место — в `run.bat` раскомментируйте и поправьте строку `set TESSERACT_CMD=...`.
    * Ubuntu/Debian: `sudo apt install tesseract-ocr`
-3. Больше ничего: Django, PyMuPDF, python-docx, waitress и остальное ставится из `vendor/wheels`.
+3. **Ghostscript** (нужен OCRmyPDF — он готовит сканы перед распознаванием; без него система работает, но не разворачивает
+   перевёрнутые и повёрнутые на 90° листы):
+   * Windows: установщик [ghostscript.com](https://ghostscript.com/releases/gsdnld.html) (64-бит, путь по умолчанию)
+   * Ubuntu/Debian: `sudo apt install ghostscript` (необязательно ещё `unpaper` — для чистки сканов, см. ниже)
+4. Больше ничего: Django, PyMuPDF, OCRmyPDF, python-docx, waitress и остальное ставится из `vendor/wheels`.
 
 Пользователям на своих компьютерах нужен только современный браузер (Chrome/Edge/Firefox).
 
@@ -150,6 +160,10 @@ python -m venv .venv
 | `GENDALF_OCR_LANGS` | `rus+eng` |
 | `GENDALF_OCR_DPI` | `300` (выше — точнее, но медленнее) |
 | `TESSERACT_CMD` | полный путь к `tesseract.exe`, если его нет в PATH |
+| `GENDALF_OCRMYPDF` | `auto` — использовать OCRmyPDF, если он есть и сработал (по умолчанию); `on` — обязательно, иначе ошибка; `off` — выключить |
+| `GENDALF_OCRMYPDF_DESKEW` | `1` — выравнивать наклон силами OCRmyPDF (по умолчанию `0`: свой алгоритм не портит ровные сканы) |
+| `GENDALF_OCRMYPDF_CLEAN` | `1` — чистка скана через unpaper (по умолчанию `0`) |
+| `GENDALF_OCRMYPDF_TIMEOUT` | секунд на подготовку документа, по умолчанию `900` |
 | `GENDALF_CSRF_ORIGINS` | адреса через запятую (нужно только за прокси/по HTTPS) |
 
 ### Безопасность

@@ -38,7 +38,7 @@ def convert(request):
         res = convert_pdf(f.read())
     except ConversionError as e:
         return JsonResponse({'error': str(e)}, status=422)
-    return JsonResponse({'html': res.html, 'pages': res.pages, 'ocr_pages': res.ocr_pages,
+    return JsonResponse({'html': res.html, 'pages': res.pages, 'ocr_pages': res.ocr_pages, 'ocrmypdf': res.ocrmypdf,
                          'warnings': res.warnings, 'page': res.meta})
 
 

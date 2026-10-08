@@ -8,4 +8,5 @@ python3 -m venv .venv
 .venv/bin/python manage.py migrate
 .venv/bin/python manage.py collectstatic --noinput
 command -v tesseract >/dev/null || echo "ВНИМАНИЕ: не найден Tesseract OCR. Установите: sudo apt install tesseract-ocr (см. README.md)"
+command -v gs >/dev/null || echo "ВНИМАНИЕ: не найден Ghostscript (нужен OCRmyPDF для поворота сканов). Установите: sudo apt install ghostscript"
 echo "Готово. Запуск: ./run.sh"

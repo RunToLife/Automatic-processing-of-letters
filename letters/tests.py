@@ -3,18 +3,22 @@ import io
 import json
 import shutil
 from unittest import skipUnless
+from unittest import mock
 
 import pymupdf
 from django.contrib.auth import get_user_model
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from docx import Document
+from PIL import Image
 
 from . import layout as L
-from .converter import convert_pdf
+from . import ocrprep
+from .converter import ConversionError, convert_pdf
 from .docxbuild import html_to_docx
 
 HAS_TESSERACT = shutil.which('tesseract') is not None
+HAS_OCRMYPDF = ocrprep.available() and ocrprep.diagnostics()['ghostscript']
 
 
 def _text(page, x, y, s, size=12, bold=False, align='l'):
@@ -191,6 +195,72 @@ class ScanTests(SimpleTestCase):
         _text(p, 60, 100, 'Short letter with very little ink on the page.')
         res = _convert(_scan_of(doc))
         self.assertIn('Short letter', res.html)
+
+
+def _rotated(doc, angle):
+    """Скан, повёрнутый целиком (как лист, поданный в сканер боком или вверх ногами)."""
+    out = pymupdf.open()
+    for pg in doc:
+        pix = pg.get_pixmap(dpi=300, colorspace=pymupdf.csGRAY, alpha=False)
+        im = Image.frombytes('L', (pix.width, pix.height), pix.samples).rotate(angle, expand=True)
+        buf = io.BytesIO()
+        im.save(buf, 'PNG')
+        w, h = (pg.rect.height, pg.rect.width) if angle % 180 else (pg.rect.width, pg.rect.height)
+        np_ = out.new_page(width=w, height=h)
+        np_.insert_image(np_.rect, stream=buf.getvalue())
+    return out
+
+
+@skipUnless(HAS_TESSERACT and HAS_OCRMYPDF, 'Нужны Tesseract, OCRmyPDF и Ghostscript')
+class OcrmypdfScanTests(SimpleTestCase):
+    """Связка OCRmyPDF (поворот страниц) + Tesseract (слова, таблицы)."""
+
+    @override_settings(OCRMYPDF_MODE='auto')
+    def test_sideways_and_upside_down_scans_are_recognised(self):
+        for angle in (90, 180):
+            res = _convert(_rotated(_scan_of(_letter(lineless=True)), angle))
+            self.assertTrue(res.ocrmypdf, angle)
+            self.assertIn('Laptop', res.html, angle)
+            self.assertIn('class="gd-grid"', res.html, angle)
+
+    @override_settings(OCRMYPDF_MODE='off')
+    def test_mode_off_does_not_call_ocrmypdf(self):
+        with mock.patch.object(ocrprep, 'prepare') as prep:
+            res = _convert(_scan_of(_letter(lineless=True)))
+        prep.assert_not_called()
+        self.assertFalse(res.ocrmypdf)
+
+
+class OcrmypdfFallbackTests(SimpleTestCase):
+    def _scan(self):
+        doc = pymupdf.open()
+        p = doc.new_page(width=595, height=842)
+        _text(p, 60, 100, 'Short letter with very little ink on the page.')
+        return _scan_of(doc)
+
+    @skipUnless(HAS_TESSERACT, 'Tesseract не установлен')
+    @override_settings(OCRMYPDF_MODE='auto')
+    def test_auto_falls_back_to_builtin_prep_with_warning(self):
+        with mock.patch.object(ocrprep, 'available', return_value=True), \
+                mock.patch.object(ocrprep, 'prepare', side_effect=ocrprep.OcrPrepError('boom')):
+            res = _convert(self._scan())
+        self.assertFalse(res.ocrmypdf)
+        self.assertIn('Short letter', res.html)
+        self.assertTrue(any('OCRmyPDF не применён' in w for w in res.warnings))
+
+    @skipUnless(HAS_TESSERACT, 'Tesseract не установлен')
+    @override_settings(OCRMYPDF_MODE='auto')
+    def test_auto_without_ocrmypdf_is_silent(self):
+        with mock.patch.object(ocrprep, 'available', return_value=False):
+            res = _convert(self._scan())
+        self.assertFalse(res.ocrmypdf)
+        self.assertEqual(res.warnings, [])
+
+    @override_settings(OCRMYPDF_MODE='on')
+    def test_mode_on_requires_ocrmypdf(self):
+        with mock.patch.object(ocrprep, 'available', return_value=False):
+            with self.assertRaises(ConversionError):
+                _convert(self._scan())
 
 
 class ViewTests(TestCase):

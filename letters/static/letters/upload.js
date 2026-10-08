@@ -33,7 +33,7 @@
       layoutEditor();
       editor.style.display = 'block'; $('docPh').hidden = true;
       saveBtn.disabled = false;
-      let msg = 'Страниц: ' + data.pages + (data.ocr_pages ? ' (распознано OCR: ' + data.ocr_pages + ')' : '');
+      let msg = 'Страниц: ' + data.pages + (data.ocr_pages ? ' (распознано OCR: ' + data.ocr_pages + (data.ocrmypdf ? ', Tesseract + OCRmyPDF' : ', Tesseract') + ')' : '');
       if (data.warnings && data.warnings.length) msg += ' · ' + data.warnings.join(' ');
       status.textContent = msg;
     } catch (e) {
