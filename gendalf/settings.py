@@ -141,6 +141,13 @@ TESSERACT_CMD = os.environ.get('TESSERACT_CMD', '')   # путь к tesseract(.e
 OCR_LANGS = os.environ.get('GENDALF_OCR_LANGS', 'rus+eng')
 OCR_DPI = int(os.environ.get('GENDALF_OCR_DPI', '300'))
 
+# OCRmyPDF: подготовка сканов перед Tesseract (поворот, выравнивание наклона, повышение разрешения)
+#   auto — использовать, если установлен и сработал (иначе встроенная подготовка); on — обязателен; off — выключен
+OCRMYPDF_MODE = os.environ.get('GENDALF_OCRMYPDF', 'auto').strip().lower()
+OCRMYPDF_DESKEW = os.environ.get('GENDALF_OCRMYPDF_DESKEW', '0') == '1'    # выравнивание наклона силами OCRmyPDF
+OCRMYPDF_CLEAN = os.environ.get('GENDALF_OCRMYPDF_CLEAN', '0') == '1'      # чистка unpaper (нужен unpaper)
+OCRMYPDF_TIMEOUT = int(os.environ.get('GENDALF_OCRMYPDF_TIMEOUT', '900'))  # секунд на весь документ
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

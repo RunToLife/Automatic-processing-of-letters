@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="100" viewBox="0 0 180 100" role="img" aria-labelledby="t d">
+<title id="t">Око сканирует</title><desc id="d">Анимация ожидания</desc>
+<style>:root{--bg:#05060f;--gold:#ffb800;--cyan:#00f0ff;--magenta:#ff2bd6;--red:#ff1a1a;--muted:#1a2140}
+.fb{fill:var(--bg)}.fg{fill:var(--gold)}.fc{fill:var(--cyan)}.fm{fill:var(--magenta)}.fr{fill:var(--red)}.fu{fill:var(--muted)}
+.sg{stroke:var(--gold)}.sc{stroke:var(--cyan)}.sm{stroke:var(--magenta)}.sr{stroke:var(--red)}.su{stroke:var(--muted)}.sb{stroke:var(--bg)}
+.nf{fill:none}
+svg{stroke-linecap:round;stroke-linejoin:round}
+text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono','DejaVu Sans Mono','Courier New',monospace;font-weight:700}
+#still{display:none}
+@media (prefers-reduced-motion:reduce){#live{display:none}#still{display:inline}}
+</style>
+<defs>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="glowS" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="glowL" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="grainf" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="1" seed="4" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.6 0 0 0 -.62"/></filter>
+<pattern id="grain" width="128" height="128" patternUnits="userSpaceOnUse"><rect width="128" height="128" filter="url(#grainf)" style="fill:#fff"/></pattern>
+<pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1.3" class="fb"/></pattern>
+<radialGradient id="gVig" cx=".5" cy=".5" r=".75"><stop offset=".55" style="stop-color:#05060f;stop-opacity:0"/><stop offset="1" style="stop-color:#05060f;stop-opacity:0.78"/></radialGradient>
+<path id="r0" fill="none" d="M5,0V16M5,4L10,0M2,8H8"/><path id="r1" fill="none" d="M5,0V16M5,4L10,0M5,12L0,16"/><path id="r2" fill="none" d="M5,0V16M5,8L0,4M5,4L10,0"/><path id="r3" fill="none" d="M5,0V16M5,2L9,6L5,10L1,6ZM5,12L0,16"/><path id="r4" fill="none" d="M5,0V16M5,3L10,7M2,8H8"/><path id="r5" fill="none" d="M5,0V16M5,8L0,4M5,3L10,7"/><path id="r6" fill="none" d="M5,0V16M5,2L9,6L5,10L1,6ZM5,0L10,4L5,8M5,0L0,5L5,10"/><path id="r7" fill="none" d="M5,0V16M5,2L9,6L5,10L1,6ZM5,12L0,16"/><path id="r8" fill="none" d="M5,0V16M5,8L0,4M5,12L0,16M5,0L10,4L5,8"/><path id="r9" fill="none" d="M5,0V16M5,3L10,7M5,0L10,4L5,8M5,12L0,16"/><path id="r10" fill="none" d="M5,0V16M5,16L10,11M5,12L0,16"/><path id="r11" fill="none" d="M5,0V16M2,8H8M0,0L5,5"/><path id="r12" fill="none" d="M5,0V16M5,12L0,16M5,16L10,11"/><path id="r13" fill="none" d="M5,0V16M5,16L10,11M5,6L0,10M2,8H8"/>
+</defs>
+<defs>
+<linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--bg)"/><stop offset=".7" style="stop-color:var(--muted);stop-opacity:.75"/><stop offset="1" style="stop-color:var(--bg)"/></linearGradient>
+<radialGradient id="gHor" cx=".5" cy=".5" r=".5"><stop offset="0" style="stop-color:var(--magenta);stop-opacity:0.50"/><stop offset="1" style="stop-color:var(--magenta);stop-opacity:0"/></radialGradient>
+<linearGradient id="gMount" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--muted);stop-opacity:.8"/><stop offset="1" style="stop-color:var(--bg);stop-opacity:1"/></linearGradient>
+<linearGradient id="gTower" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--muted)"/><stop offset="1" style="stop-color:var(--bg)"/></linearGradient>
+<linearGradient id="gBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--red);stop-opacity:.95"/><stop offset=".45" style="stop-color:var(--gold);stop-opacity:.5"/><stop offset="1" style="stop-color:var(--cyan);stop-opacity:.25"/></linearGradient>
+<radialGradient id="gEye" cx=".5" cy=".5" r=".5"><stop offset="0" style="stop-color:var(--gold)"/><stop offset=".55" style="stop-color:var(--red)"/><stop offset="1" style="stop-color:var(--red);stop-opacity:.15"/></radialGradient>
+<radialGradient id="gBeacon" cx=".5" cy=".5" r=".5"><stop offset="0" style="stop-color:var(--gold);stop-opacity:.75"/><stop offset="1" style="stop-color:var(--gold);stop-opacity:0"/></radialGradient>
+<linearGradient id="gShaft" x1="0" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color:var(--gold);stop-opacity:.7"/><stop offset="1" style="stop-color:var(--gold);stop-opacity:0"/></linearGradient>
+<linearGradient id="gPortal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--gold);stop-opacity:.05"/><stop offset="1" style="stop-color:var(--gold);stop-opacity:.35"/></linearGradient>
+<radialGradient id="gFogC" cx=".5" cy=".5" r=".5"><stop offset="0" style="stop-color:var(--cyan);stop-opacity:0.16"/><stop offset="1" style="stop-color:var(--cyan);stop-opacity:0"/></radialGradient>
+<radialGradient id="gFogM" cx=".5" cy=".5" r=".5"><stop offset="0" style="stop-color:var(--magenta);stop-opacity:0.16"/><stop offset="1" style="stop-color:var(--magenta);stop-opacity:0"/></radialGradient>
+<linearGradient id="gGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--magenta);stop-opacity:.0"/><stop offset="1" style="stop-color:var(--magenta);stop-opacity:.16"/></linearGradient>
+<g id="env"><rect x="-12" y="-8.5" width="24" height="17" rx="2" fill="none" stroke-width="4.5" opacity=".22"/><rect x="-12" y="-8.5" width="24" height="17" rx="2" style="fill:var(--muted)"/><path d="M-12,-8.5L0,1.5L12,-8.5" fill="none"/></g><g id="doc"><path d="M-10,-13H4L10,-7V13H-10Z" style="fill:var(--muted)"/><path d="M4,-13V-7H10M-6,-1H6M-6,4H6M-6,9H1" fill="none"/></g><g id="raven"><path d="M-17,3L-31,-2L-28,4L-31,9L-16,6Z" class="fb" style="stroke:var(--cyan)" stroke-width="1"/><path d="M-18,2Q-8,-8 6,-5Q14,-4 18,-1L27,1L18,3.5Q10,8 -2,8Q-12,8 -18,2Z" class="fb" style="stroke:var(--cyan)" stroke-width="1.4"/><path d="M-3,-5Q-5,-24 -19,-31Q-12,-16 0,-3Z" class="fb" style="stroke:var(--cyan)" stroke-width="1.2"><animate attributeName="d" values="M-3,-5Q-5,-24 -19,-31Q-12,-16 0,-3Z;M-3,-3Q-9,8 -20,16Q-8,10 0,0Z;M-3,-5Q-5,-24 -19,-31Q-12,-16 0,-3Z" dur=".62s" repeatCount="indefinite" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1"/></path><circle cx="12.6" cy="-2.4" r="3.6" class="fc" opacity=".28"/><circle cx="12.6" cy="-2.4" r="1.5" class="fc" filter="url(#glowS)"/></g>
+<text id="ttl" x="48" y="122" font-size="72" textLength="380.2" lengthAdjust="spacing">ГЕНДАЛЬФ</text>
+</defs>
+<g id="live"><g transform="translate(90,48) scale(1.2)"><g transform="translate(0,0)">
+<g class="sg" stroke-width="1.1" opacity=".55"><g><animateTransform attributeName="transform" type="rotate" values="0;360" keyTimes="0;1" calcMode="spline" keySplines="0 0 1 1" dur="24s" begin="0s" repeatCount="indefinite" /><path d="M44,0L52,0M39.6,15.3L55.9,21.5M27.4,27.5L32.4,32.5M9.8,34.3L13.8,48.4M-9.8,34.3L-11.6,40.6M-27.4,27.5L-38.7,38.8M-39.6,15.3L-46.9,18M-44,0L-62,0M-39.6,-15.3L-46.9,-18M-27.4,-27.5L-38.7,-38.8M-9.8,-34.3L-11.6,-40.6M9.8,-34.3L13.8,-48.4M27.4,-27.5L32.4,-32.5M39.6,-15.3L55.9,-21.5" fill="none"/></g></g>
+<ellipse rx="60" ry="26" fill="url(#gEye)" opacity=".32"/>
+<g><animateTransform attributeName="transform" type="scale" values="1,1;1,1;1,0.1;1,1;1,1" keyTimes="0;0.9;0.94;0.98;1" calcMode="spline" keySplines="0 0 1 1;0 0 1 1;0 0 1 1;0 0 1 1" dur="7.5s" begin="0s" repeatCount="indefinite" />
+<path d="M-36,0Q0,-30 36,0Q0,30 -36,0Z" fill="#1a0000" fill-opacity=".85" class="sr" stroke-width="2.2" filter="url(#glow)"/>
+<circle r="15" fill="url(#gEye)"/>
+<circle r="15" fill="none" class="sg" stroke-width="1" opacity=".8"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;-7,0;7,0;0,0" keyTimes="0;0.25;0.75;1" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1" dur="3s" begin="0s" repeatCount="indefinite" /><ellipse rx="3.4" ry="12" class="fb" opacity=".95"><animate attributeName="ry" values="12;14.5;12" keyTimes="0;0.5;1" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1" dur="2.4s" begin="0s" repeatCount="indefinite" /></ellipse><ellipse rx="1.2" ry="9" class="fr" opacity=".9"/></g>
+</g>
+<ellipse rx="20" ry="9" fill="none" class="sr" opacity="0"/>
+<g opacity=".0"><animate attributeName="opacity" values="0.6;1;0.6" keyTimes="0;0.5;1" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1" dur="2.4s" begin="0s" repeatCount="indefinite" /></g>
+</g></g><rect x="20" y="0" width="140" height="2" class="fc" opacity=".0" transform="translate(0,45)"><animate attributeName="y" values="-2;58;-2" keyTimes="0;0.5;1" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1" dur="1.8s" begin="0s" repeatCount="indefinite" /><animate attributeName="opacity" values="0;0.8;0" keyTimes="0;0.5;1" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1" dur="1.8s" begin="0s" repeatCount="indefinite" /></rect></g><g id="still"><g transform="translate(90,48) scale(1.2)"><g transform="translate(0,0)">
+<g class="sg" stroke-width="1.1" opacity=".55"><g><path d="M44,0L52,0M39.6,15.3L55.9,21.5M27.4,27.5L32.4,32.5M9.8,34.3L13.8,48.4M-9.8,34.3L-11.6,40.6M-27.4,27.5L-38.7,38.8M-39.6,15.3L-46.9,18M-44,0L-62,0M-39.6,-15.3L-46.9,-18M-27.4,-27.5L-38.7,-38.8M-9.8,-34.3L-11.6,-40.6M9.8,-34.3L13.8,-48.4M27.4,-27.5L32.4,-32.5M39.6,-15.3L55.9,-21.5" fill="none"/></g></g>
+<ellipse rx="60" ry="26" fill="url(#gEye)" opacity=".32"/>
+<g>
+<path d="M-36,0Q0,-30 36,0Q0,30 -36,0Z" fill="#1a0000" fill-opacity=".85" class="sr" stroke-width="2.2" filter="url(#glow)"/>
+<circle r="15" fill="url(#gEye)"/>
+<circle r="15" fill="none" class="sg" stroke-width="1" opacity=".8"/>
+<g><ellipse rx="3.4" ry="12" class="fb" opacity=".95"></ellipse><ellipse rx="1.2" ry="9" class="fr" opacity=".9"/></g>
+</g>
+<ellipse rx="20" ry="9" fill="none" class="sr" opacity="0"/>
+<g opacity=".0"></g>
+</g></g><rect x="20" y="0" width="140" height="2" class="fc" opacity=".0" transform="translate(0,45)"></rect></g></svg>
