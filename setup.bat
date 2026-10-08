@@ -10,27 +10,17 @@ if errorlevel 1 (
 )
 ".venv\Scripts\python.exe" manage.py migrate || goto :err
 ".venv\Scripts\python.exe" manage.py collectstatic --noinput || goto :err
-where tesseract >nul 2>nul
-if errorlevel 1 (
-    if not exist "C:\Program Files\Tesseract-OCR\tesseract.exe" (
-        echo.
-        echo WARNING: Tesseract OCR not found. Install it - see README.md - otherwise scans cannot be recognized.
-    )
-)
-where gswin64c >nul 2>nul
-if errorlevel 1 (
-    if not exist "C:\Program Files\gs" (
-        echo.
-        echo WARNING: Ghostscript not found. OCRmyPDF needs it to rotate sideways/upside-down scans - see README.md.
-    )
-)
+if not defined TESSERACT_CMD if exist "C:\Program Files\Tesseract-OCR\tesseract.exe" set "TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe"
+echo.
+echo === Checking Tesseract + OCRmyPDF ===
+".venv\Scripts\python.exe" manage.py check_ocr
 echo.
 echo Done. Now run run.bat
 pause
 exit /b 0
 
 :nopython
-echo Python not found. Install Python 3.11 or 3.12 and tick "Add Python to PATH".
+echo Python not found. Install Python 3.11 or 3.12 (64-bit) and tick "Add Python to PATH".
 pause
 exit /b 1
 

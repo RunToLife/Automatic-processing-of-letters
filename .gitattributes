@@ -1,4 +1,4 @@
-*.bat text eol=crlf
+*.bat -text
 *.sh text eol=lf
 *.whl binary
 *.traineddata binary
